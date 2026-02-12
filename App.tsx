@@ -94,7 +94,8 @@ const App: React.FC = () => {
       setFormData(prev => ({ ...prev, contractText: text }));
       nextStep();
     } catch (error) {
-      alert("Houve um erro ao gerar o contrato. Tente novamente.");
+      console.error("Falha ao processar contrato:", error);
+      alert("Houve um erro ao gerar o contrato. Verifique sua conexão ou tente novamente em instantes.");
     } finally {
       setLoading(false);
     }
@@ -114,8 +115,8 @@ const App: React.FC = () => {
       
       setStep(FormStep.SUCCESS);
     } catch (error) {
-      console.error(error);
-      alert("Erro ao finalizar processo. Verifique sua conexão ou a configuração da planilha.");
+      console.error("Erro na finalização:", error);
+      alert("Erro ao finalizar processo. Os dados podem não ter sido salvos na planilha.");
     } finally {
       setLoading(false);
     }

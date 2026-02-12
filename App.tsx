@@ -103,12 +103,19 @@ const App: React.FC = () => {
   const finalizeProcess = async () => {
     setLoading(true);
     try {
+      // 1. Salva os dados na planilha
       await saveToGoogleSheets(formData);
-      const pdfBase64 = simulatePdfGeneration(formData.contractText || "");
-      await sendToAutentique(pdfBase64, formData.mainGuest.email, formData.mainGuest.fullName);
+      
+      // 2. Tenta enviar para assinatura (se houver contrato)
+      if (formData.contractText) {
+        const pdfBase64 = simulatePdfGeneration(formData.contractText);
+        await sendToAutentique(pdfBase64, formData.mainGuest.email, formData.mainGuest.fullName);
+      }
+      
       setStep(FormStep.SUCCESS);
     } catch (error) {
-      alert("Erro ao finalizar processo.");
+      console.error(error);
+      alert("Erro ao finalizar processo. Verifique sua conexão ou a configuração da planilha.");
     } finally {
       setLoading(false);
     }

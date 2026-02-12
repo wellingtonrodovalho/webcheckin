@@ -7,45 +7,34 @@ export const generateContract = async (data: FullFormData): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const prompt = `
-    Gere um contrato de locação por temporada profissional e juridicamente sólido para um imóvel em Goiânia, GO.
-    Use estritamente os seguintes dados:
-    - Locatário (Titular): ${data.mainGuest.fullName}, CPF: ${data.mainGuest.cpf}, RG: ${data.mainGuest.rg}, Endereço: ${data.mainGuest.address}.
-    - Período: De ${data.reservation.startDate} até ${data.reservation.endDate}.
-    - Local do Imóvel: ${data.reservation.propertyAddress}.
-    - Valor da Diária: R$ ${data.reservation.dailyRate}.
-    - Quantidade de Hóspedes: ${data.reservation.guestCount}.
-    - Acompanhantes: ${data.companions.map(c => c.name).join(', ') || 'Nenhum'}.
-    - Motivo da Estadia: ${data.reservation.reasonForVisit}.
-    - Veículo: ${data.reservation.vehicleModel || 'Não informado'} - Placa: ${data.reservation.vehiclePlate || 'N/A'}.
+    Gere um contrato de locação por temporada profissional para um imóvel em Goiânia, GO.
+    Dados principais:
+    - Locatário: ${data.mainGuest.fullName}, CPF: ${data.mainGuest.cpf}.
+    - Período: ${data.reservation.startDate} a ${data.reservation.endDate}.
+    - Imóvel: ${data.reservation.propertyAddress}.
+    - Diária: R$ ${data.reservation.dailyRate}.
+    - Hóspedes: ${data.reservation.guestCount}.
+    - Acompanhantes: ${data.companions.map(c => c.name).join(', ') || 'Apenas o titular'}.
+    - Veículo: ${data.reservation.vehicleModel || 'Nenhum'} (Placa: ${data.reservation.vehiclePlate || 'N/A'}).
 
-    O contrato deve seguir a Lei do Inquilinato (Lei 8.245/91).
-    Inclua cláusulas sobre:
-    1. Objeto da locação.
-    2. Prazo e horários.
-    3. Valor e pagamento.
-    4. Deveres do locatário.
-    5. Limite de ocupantes.
-    6. Foro de Goiânia-GO.
-    
-    Retorne apenas o texto formatado em Markdown, sem comentários adicionais.
+    Regras: Use a Lei 8.245/91. Inclua cláusulas de silêncio, conservação e foro de Goiânia.
+    Retorne o texto formatado em Markdown.
   `;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: prompt,
-      config: {
-        temperature: 0.7,
-      }
+      model: 'gemini-flash-latest',
+      contents: prompt
     });
 
-    if (!response.text) {
-      throw new Error("A IA retornou uma resposta vazia.");
+    const text = response.text;
+    if (!text) {
+      throw new Error("Resposta da IA veio vazia.");
     }
 
-    return response.text;
+    return text;
   } catch (err: any) {
-    console.error("Erro detalhado na geração do contrato via Gemini:", err);
-    throw err;
+    console.error("Erro na API Gemini:", err);
+    throw new Error("Falha na comunicação com o servidor de contratos.");
   }
 };

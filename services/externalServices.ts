@@ -23,10 +23,14 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
     return false;
   }
 
-  // Mapeamento explícito de campos para garantir integridade na planilha
+  // Mapeamento completo incluindo dados do proprietário para o contrato
   const payload = {
     "Data de Envio": new Date().toLocaleString('pt-BR'),
     "Imóvel": data.propertyDetails?.name || 'N/A',
+    "Proprietário Imóvel": data.propertyDetails?.ownerName || 'N/A',
+    "CPF Proprietário": data.propertyDetails?.ownerCpf || 'N/A',
+    "Estado Civil Proprietário": data.propertyDetails?.ownerStatus || 'N/A',
+    "Profissão Proprietário": data.propertyDetails?.ownerProfession || 'N/A',
     "Check-in": formatDate(data.reservation.startDate),
     "Check-out": formatDate(data.reservation.endDate),
     "Hóspedes": data.reservation.guestCount,
@@ -37,8 +41,8 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
     "CPF Titular": data.mainGuest.cpf,
     "RG Titular": data.mainGuest.rg,
     "Nacionalidade": data.mainGuest.nationality || 'Brasileira',
-    "Estado Civil": data.mainGuest.maritalStatus,
-    "Profissão": data.mainGuest.profession,
+    "Estado Civil Titular": data.mainGuest.maritalStatus,
+    "Profissão Titular": data.mainGuest.profession,
     "E-mail": data.mainGuest.email,
     "Telefone": data.mainGuest.phone,
     "Endereço": data.mainGuest.address,
@@ -53,7 +57,6 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
   };
 
   try {
-    // Usando JSON.stringify para garantir que o base64 longo seja enviado corretamente como texto
     const response = await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
       method: 'POST',
       mode: 'no-cors',

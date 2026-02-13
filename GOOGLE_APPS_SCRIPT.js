@@ -1,14 +1,15 @@
 
 /**
- * GOOGLE APPS SCRIPT - VERSÃO COM SUPORTE A ARQUIVOS (DOCS/SELFIES)
+ * GOOGLE APPS SCRIPT - VERSÃO ROBUSTA PARA IMAGENS E DADOS
  * 
- * Este script salva imagens enviadas em base64 no Google Drive
- * e coloca o link de visualização na planilha.
+ * Este script recebe dados de um formulário, detecta imagens em base64,
+ * salva-as no Google Drive e insere os links na planilha.
  */
 
 function doPost(e) {
   var lock = LockService.getScriptLock();
-  lock.tryLock(10000);
+  // Aumentado o tempo de espera para evitar colisões em envios simultâneos
+  lock.tryLock(30000); 
 
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -16,20 +17,20 @@ function doPost(e) {
     var contents = e.postData.contents;
     var data = JSON.parse(contents);
     
-    // Pasta para salvar os arquivos (Cria se não existir)
+    // Pasta para salvar os arquivos
     var folderName = "Documentos_Hospedes_Reservas";
     var folders = DriveApp.getFoldersByName(folderName);
     var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
 
-    // 1. Identificar e Criar cabeçalhos
-    var lastCol = Math.max(sheet.getLastColumn(), 1);
+    // 1. Obter ou Criar cabeçalhos
     var headers = [];
     if (sheet.getLastColumn() > 0) {
-      headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function(h) {
+      headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(function(h) {
         return h.toString().trim();
-      }).filter(String);
+      });
     }
 
+    // Identificar novas chaves no JSON que não estão na planilha
     var jsonKeys = Object.keys(data);
     var missingKeys = jsonKeys.filter(function(key) {
       return headers.indexOf(key) === -1;
@@ -40,45 +41,58 @@ function doPost(e) {
       sheet.getRange(1, startCol, 1, missingKeys.length)
            .setValues([missingKeys])
            .setFontWeight("bold")
-           .setBackground("#F1F5F9");
+           .setBackground("#F1F5F9")
+           .setVerticalAlignment("middle");
       headers = headers.concat(missingKeys);
     }
 
-    // 2. Processar dados e converter base64 em links do Drive
+    // 2. Processar cada valor da linha
     var rowData = headers.map(function(header) {
       var value = data[header];
       
-      // Se o valor parecer uma imagem em base64
+      if (value === undefined || value === null) return "";
+
+      // Verificar se é uma imagem em Base64 (Data URL)
       if (typeof value === 'string' && value.indexOf('data:image') === 0) {
         try {
-          var contentType = value.substring(5, value.indexOf(';'));
-          var extension = contentType.split('/')[1];
-          var base64Data = value.substring(value.indexOf(',') + 1);
+          var parts = value.split(',');
+          var metadata = parts[0];
+          var base64Data = parts[1];
+          
+          var contentType = metadata.substring(5, metadata.indexOf(';'));
+          var extension = contentType.split('/')[1] || "jpg";
+          
+          // Nome amigável para o arquivo
+          var guestName = (data["Nome Titular"] || "Hospede").toString().replace(/[^a-z0-9]/gi, '_');
+          var fileName = header.replace(/[^a-z0-9]/gi, '_') + "_" + guestName + "_" + new Date().getTime() + "." + extension;
+          
           var decoded = Utilities.base64Decode(base64Data);
-          var blob = Utilities.newBlob(decoded, contentType, header + "_" + data["Nome Titular"] + "_" + new Date().getTime() + "." + extension);
+          var blob = Utilities.newBlob(decoded, contentType, fileName);
           
           var file = folder.createFile(blob);
           file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
           
+          // Retorna o link do arquivo para a planilha
           return file.getUrl();
         } catch (err) {
-          return "Erro ao processar imagem: " + err.toString();
+          // Se falhar a conversão da imagem, salva um trecho do base64 para diagnóstico
+          return "ERRO IMAGEM: " + err.toString() + " | Início: " + value.substring(0, 50);
         }
       }
       
-      return value !== undefined ? value : "";
+      return value;
     });
 
-    // 3. Adicionar na planilha
+    // 3. Inserir a linha na planilha
     sheet.appendRow(rowData);
     
-    // Auto-ajuste de colunas
+    // Formatação básica de estética
     sheet.autoResizeColumns(1, headers.length);
     
     return ContentService.createTextOutput("Sucesso").setMimeType(ContentService.MimeType.TEXT);
 
   } catch (error) {
-    return ContentService.createTextOutput("Erro: " + error.toString()).setMimeType(ContentService.MimeType.TEXT);
+    return ContentService.createTextOutput("Erro Crítico: " + error.toString()).setMimeType(ContentService.MimeType.TEXT);
   } finally {
     lock.releaseLock();
   }

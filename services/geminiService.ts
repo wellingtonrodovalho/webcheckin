@@ -3,6 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import { FullFormData, PROPERTIES } from "../types";
 
 export const generateContract = async (data: FullFormData): Promise<string> => {
+  // Inicialização dentro da função para garantir o carregamento da chave de API
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const property = PROPERTIES.find(p => p.id === data.reservation.propertyId) || PROPERTIES[0];
@@ -10,70 +11,59 @@ export const generateContract = async (data: FullFormData): Promise<string> => {
   let petClause = "";
   if (property.petAllowed) {
     if (data.pet.hasPet) {
-      petClause = `CLÁUSULA PET: É PERMITIDA a permanência do animal doméstico descrito a seguir: Nome: ${data.pet.name}, Espécie: ${data.pet.species}, Raça: ${data.pet.breed}, Porte: ${data.pet.size}, Peso: ${data.pet.weight}, Idade: ${data.pet.age}. O locatário declara possuir o comprovante de vacinação em dia. O animal deve respeitar as normas de higiene e silêncio do condomínio.`;
+      petClause = `CLÁUSULA SOBRE ANIMAIS: Fica autorizada a permanência do animal doméstico: Nome: ${data.pet.name}, Espécie: ${data.pet.species}, Raça: ${data.pet.breed}, Porte: ${data.pet.size}, Peso: ${data.pet.weight}, Idade: ${data.pet.age}. O Locatário declara que as vacinas estão em dia e assume total responsabilidade por qualquer dano ou barulho causado pelo animal.`;
     } else {
-      petClause = "CLÁUSULA PET: É PERMITIDA a permanência de animais domésticos de pequeno porte, desde que previamente informados. Nesta reserva, o locatário informou que NÃO trará animais.";
+      petClause = "CLÁUSULA SOBRE ANIMAIS: O Locatário declara que não haverá animais de estimação durante a estada.";
     }
   } else {
-    petClause = "CLÁUSULA PET: É expressamente PROIBIDA a permanência de qualquer tipo de animal doméstico no imóvel, sob pena de rescisão imediata e multa.";
+    petClause = "CLÁUSULA SOBRE ANIMAIS: É terminantemente PROIBIDA a entrada de animais de estimação no imóvel.";
   }
 
   const prompt = `
-    Gere um contrato de locação por temporada profissional e formal.
-    REGRAS DE FORMATAÇÃO:
-    - NÃO use asteriscos (*) ou símbolos de markdown.
-    - NÃO use colchetes [] ou hashtags #.
-    - Retorne apenas o texto puro e limpo, pronto para leitura.
-    - Use espaçamento adequado entre as cláusulas.
+    Aja como um advogado especialista em direito imobiliário e escreva um CONTRATO DE LOCAÇÃO POR TEMPORADA.
+    
+    REGRAS CRÍTICAS:
+    - Retorne APENAS o texto do contrato.
+    - NÃO use negrito, asteriscos (*), colchetes ou qualquer formatação Markdown.
+    - Use parágrafos claros e numeração simples (1, 2, 3...).
 
-    LOCADOR (PROPRIETÁRIO):
+    DADOS DO LOCADOR:
     Nome: ${property.ownerName}, CPF: ${property.ownerCpf}, Estado Civil: ${property.ownerStatus}, Profissão: ${property.ownerProfession}.
 
-    LOCATÁRIO (HÓSPEDE):
-    Nome: ${data.mainGuest.fullName}, CPF: ${data.mainGuest.cpf}, RG: ${data.mainGuest.rg}, E-mail: ${data.mainGuest.email}, Telefone: ${data.mainGuest.phone}, Residente em: ${data.mainGuest.address}.
+    DADOS DO LOCATÁRIO:
+    Nome: ${data.mainGuest.fullName}, CPF: ${data.mainGuest.cpf}, RG: ${data.mainGuest.rg}, Residente em: ${data.mainGuest.address}.
 
-    IMÓVEL:
-    Nome: ${property.name}.
+    DADOS DO IMÓVEL E LOCAÇÃO:
+    Imóvel: ${property.name}.
     Endereço: ${property.address}.
-    Capacidade Total do Imóvel: ${property.capacity} pessoas.
-
-    DETALHES DA LOCAÇÃO:
-    Período: ${data.reservation.startDate} até ${data.reservation.endDate}.
-    Valor Total da Reserva: R$ ${data.reservation.totalValue.toFixed(2)}.
-    Hóspedes: ${data.reservation.guestCount}.
-    Acompanhantes: ${data.companions.map(c => c.name).join(', ') || 'Nenhum'}.
+    Período: De ${data.reservation.startDate} a ${data.reservation.endDate}.
+    Valor Total: R$ ${data.reservation.totalValue.toFixed(2)}.
+    Hóspedes: ${data.reservation.guestCount} (Titular e acompanhantes: ${data.companions.map(c => c.name).join(', ') || 'Nenhum'}).
 
     ${petClause}
 
-    ESTRUTURA OBRIGATÓRIA DO TEXTO:
-    1. OBJETO DA LOCAÇÃO: Descrever o imóvel para fins temporários.
-    2. PRAZO: Datas de entrada e saída.
-    3. VALOR E PAGAMENTO: Citar o valor total de R$ ${data.reservation.totalValue.toFixed(2)}.
-    4. OBRIGAÇÕES DO LOCATÁRIO: Conservação, silêncio e normas.
-    5. CLÁUSULA PET: Conforme definido acima.
-    6. FORO: Comarca de Goiânia-GO ou Caldas Novas conforme o imóvel.
-
-    Escreva o contrato agora.
+    O contrato deve conter: Objeto, Prazo, Preço, Deveres de Conservação e Foro da Comarca do Imóvel.
   `;
 
   try {
+    // Utilizando o modelo gemini-2.0-flash para maior confiabilidade
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.0-flash',
       contents: prompt,
     });
 
     let text = response.text || "";
     
-    // Limpeza rigorosa de símbolos de markdown
+    // Limpeza profunda de caracteres especiais de markdown que podem quebrar o visual
     text = text.replace(/[*#_\[\]]/g, '').trim();
 
-    if (!text) {
-      throw new Error("A resposta da IA está vazia.");
+    if (!text || text.length < 100) {
+      throw new Error("Resposta da IA insuficiente.");
     }
 
     return text;
   } catch (err: any) {
-    console.error("Erro na geração do contrato via Gemini API:", err);
-    throw new Error("Não foi possível gerar o contrato automaticamente.");
+    console.error("Erro detalhado na geração do contrato:", err);
+    throw new Error("Erro na API do Gemini. Tente novamente em alguns segundos.");
   }
 };

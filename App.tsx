@@ -47,7 +47,6 @@ const App: React.FC = () => {
 
   const selectedProperty = PROPERTIES.find(p => p.id === formData.reservation.propertyId) || PROPERTIES[0];
 
-  // Garante que o número de hóspedes não ultrapasse a capacidade ao trocar de imóvel
   useEffect(() => {
     if (formData.reservation.guestCount > selectedProperty.capacity) {
       setFormData(prev => ({
@@ -134,14 +133,15 @@ const App: React.FC = () => {
       alert("Por favor, carregue o comprovante de vacinação do pet.");
       return;
     }
+    
     setLoading(true);
     try {
       const text = await generateContract(formData);
       setFormData(prev => ({ ...prev, contractText: text }));
-      nextStep();
-    } catch (error) {
-      console.error("Falha ao processar contrato:", error);
-      alert("Houve um erro ao gerar o contrato. Verifique sua conexão ou tente novamente.");
+      setStep(FormStep.CONTRACT_PREVIEW);
+    } catch (error: any) {
+      console.error("Erro no processamento:", error);
+      alert("Não foi possível gerar o contrato. Verifique se todos os campos estão preenchidos corretamente ou tente novamente em instantes.");
     } finally {
       setLoading(false);
     }
@@ -214,7 +214,6 @@ const App: React.FC = () => {
 
         <div className="bg-white rounded-2xl sm:rounded-[2.5rem] shadow-2xl shadow-slate-200/60 border border-slate-100 p-5 sm:p-8 lg:p-12 transition-all duration-500 overflow-hidden">
           
-          {/* STEP -1: LGPD CONSENT */}
           {step === FormStep.CONSENT && (
             <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4">
               <div className="text-center space-y-3 sm:space-y-4">
@@ -263,12 +262,10 @@ const App: React.FC = () => {
             </div>
           )}
 
-          {/* STEP 0: RESERVATION */}
           {step === FormStep.RESERVATION && (
             <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-4">
               <div className="border-b border-slate-100 pb-4">
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Detalhes da Estadia</h2>
-                <p className="text-slate-500 text-xs sm:text-sm mt-1">Dados da reserva e imóvel selecionado.</p>
               </div>
 
               <div className="space-y-4">
@@ -277,10 +274,10 @@ const App: React.FC = () => {
                   name="propertyId"
                   value={formData.reservation.propertyId}
                   onChange={handleReservationChange}
-                  className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none text-sm sm:text-base font-bold text-blue-900"
+                  className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm sm:text-base font-bold text-blue-900"
                 >
                   {PROPERTIES.map(p => (
-                    <option key={p.id} value={p.id}>{p.name} ({p.capacity} pess.)</option>
+                    <option key={p.id} value={p.id}>{p.name} (Cap. {p.capacity})</option>
                   ))}
                 </select>
                 {selectedProperty?.petAllowed ? (
@@ -292,302 +289,114 @@ const App: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Data de Entrada</label>
-                  <input
-                    type="date"
-                    name="startDate"
-                    value={formData.reservation.startDate}
-                    onChange={handleReservationChange}
-                    className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base"
-                  />
+                  <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Entrada</label>
+                  <input type="date" name="startDate" value={formData.reservation.startDate} onChange={handleReservationChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Data de Saída</label>
-                  <input
-                    type="date"
-                    name="endDate"
-                    value={formData.reservation.endDate}
-                    onChange={handleReservationChange}
-                    className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base"
-                  />
+                  <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Saída</label>
+                  <input type="date" name="endDate" value={formData.reservation.endDate} onChange={handleReservationChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Total de Hóspedes (Máx {selectedProperty.capacity})</label>
-                  <select
-                    name="guestCount"
-                    value={formData.reservation.guestCount}
-                    onChange={handleReservationChange}
-                    className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base"
-                  >
+                  <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Hóspedes (Máx {selectedProperty.capacity})</label>
+                  <select name="guestCount" value={formData.reservation.guestCount} onChange={handleReservationChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl">
                     {Array.from({ length: selectedProperty.capacity }).map((_, i) => (
                       <option key={i + 1} value={i + 1}>{i + 1} {i === 0 ? 'Pessoa' : 'Pessoas'}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Valor Total da Reserva (R$)</label>
-                  <input
-                    type="number"
-                    name="totalValue"
-                    value={formData.reservation.totalValue || ''}
-                    onChange={handleReservationChange}
-                    placeholder="0.00"
-                    className="w-full px-4 py-3 sm:py-4 bg-blue-50 border border-blue-200 rounded-xl text-sm sm:text-base font-black text-blue-700"
-                  />
+                  <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Valor Total (R$)</label>
+                  <input type="number" name="totalValue" value={formData.reservation.totalValue || ''} onChange={handleReservationChange} placeholder="0.00" className="w-full px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl font-black text-blue-700" />
                 </div>
               </div>
 
-              {/* PET SECTION */}
               {selectedProperty?.petAllowed && (
                 <div className="p-5 sm:p-8 bg-blue-50/30 border border-blue-100 rounded-[2rem] space-y-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
-                        <i className="fas fa-paw"></i>
-                      </div>
-                      <h3 className="font-black text-blue-900 uppercase tracking-tight text-sm sm:text-base">Informações do Pet</h3>
+                      <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center"><i className="fas fa-paw"></i></div>
+                      <h3 className="font-black text-blue-900 uppercase text-sm sm:text-base">Informações do Pet</h3>
                     </div>
                     <label className="inline-flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        name="hasPet"
-                        checked={formData.pet.hasPet}
-                        onChange={handlePetChange}
-                        className="sr-only peer" 
-                      />
-                      <div className="relative w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <input type="checkbox" name="hasPet" checked={formData.pet.hasPet} onChange={handlePetChange} className="sr-only peer" />
+                      <div className="relative w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                       <span className="ms-3 text-sm font-bold text-blue-900">Trarei Pet</span>
                     </label>
                   </div>
 
                   {formData.pet.hasPet && (
-                    <div className="grid gap-5 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="grid gap-5 animate-in fade-in slide-in-from-top-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Nome do Pet</label>
-                          <input 
-                            name="name"
-                            value={formData.pet.name}
-                            onChange={handlePetChange}
-                            className="w-full px-4 py-3 bg-white border border-blue-100 rounded-xl text-sm font-bold text-slate-700" 
-                            placeholder="Ex: Meg e Sol"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Raça</label>
-                          <input 
-                            name="breed"
-                            value={formData.pet.breed}
-                            onChange={handlePetChange}
-                            className="w-full px-4 py-3 bg-white border border-blue-100 rounded-xl text-sm font-bold text-slate-700" 
-                            placeholder="Ex: Pinscher"
-                          />
-                        </div>
+                        <input name="name" value={formData.pet.name} onChange={handlePetChange} className="w-full px-4 py-3 border border-blue-100 rounded-xl text-sm" placeholder="Nome do Pet" />
+                        <input name="breed" value={formData.pet.breed} onChange={handlePetChange} className="w-full px-4 py-3 border border-blue-100 rounded-xl text-sm" placeholder="Raça" />
                       </div>
-
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Espécie</label>
-                          <select 
-                            name="species"
-                            value={formData.pet.species}
-                            onChange={handlePetChange}
-                            className="w-full px-4 py-3 bg-white border border-blue-100 rounded-xl text-sm font-bold text-slate-700"
-                          >
-                            <option value="Canino">Canino</option>
-                            <option value="Felino">Felino</option>
-                            <option value="Outros">Outros</option>
-                          </select>
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Peso</label>
-                          <input 
-                            name="weight"
-                            value={formData.pet.weight}
-                            onChange={handlePetChange}
-                            className="w-full px-4 py-3 bg-white border border-blue-100 rounded-xl text-sm font-bold text-slate-700" 
-                            placeholder="Ex: 3kg"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Idade</label>
-                          <input 
-                            name="age"
-                            value={formData.pet.age}
-                            onChange={handlePetChange}
-                            className="w-full px-4 py-3 bg-white border border-blue-100 rounded-xl text-sm font-bold text-slate-700" 
-                            placeholder="Ex: 1,5 ano"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Porte</label>
-                          <select 
-                            name="size"
-                            value={formData.pet.size}
-                            onChange={handlePetChange}
-                            className="w-full px-4 py-3 bg-white border border-blue-100 rounded-xl text-sm font-bold text-slate-700"
-                          >
-                            <option value="Pequeno">Pequeno</option>
-                            <option value="Médio">Médio</option>
-                            <option value="Grande">Grande</option>
-                          </select>
-                        </div>
+                        <select name="species" value={formData.pet.species} onChange={handlePetChange} className="w-full px-4 py-3 border border-blue-100 rounded-xl text-sm">
+                          <option value="Canino">Canino</option>
+                          <option value="Felino">Felino</option>
+                        </select>
+                        <input name="weight" value={formData.pet.weight} onChange={handlePetChange} className="w-full px-4 py-3 border border-blue-100 rounded-xl text-sm" placeholder="Peso" />
+                        <input name="age" value={formData.pet.age} onChange={handlePetChange} className="w-full px-4 py-3 border border-blue-100 rounded-xl text-sm" placeholder="Idade" />
+                        <select name="size" value={formData.pet.size} onChange={handlePetChange} className="w-full px-4 py-3 border border-blue-100 rounded-xl text-sm">
+                          <option value="Pequeno">Pequeno</option>
+                          <option value="Médio">Médio</option>
+                        </select>
                       </div>
-
-                      <div className="pt-2">
-                        <FileUpload 
-                          id="pet_vaccine"
-                          label="Comprovante de Vacinação (Obrigatório)"
-                          onFileSelect={handleDocumentUpload('pet')}
-                        />
-                      </div>
+                      <FileUpload id="pet_vaccine" label="Cartão de Vacina (Obrigatório)" onFileSelect={handleDocumentUpload('pet')} />
                     </div>
                   )}
                 </div>
               )}
 
-              <button
-                onClick={nextStep}
-                disabled={!formData.reservation.startDate || !formData.reservation.endDate || formData.reservation.totalValue <= 0 || (formData.pet.hasPet && !formData.pet.vaccineFile)}
-                className="w-full py-4 sm:py-5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold rounded-xl sm:rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2"
-              >
-                Próxima Etapa <i className="fas fa-arrow-right"></i>
+              <button onClick={nextStep} disabled={!formData.reservation.startDate || !formData.reservation.endDate} className="w-full py-4 sm:py-5 bg-blue-600 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2">
+                Continuar <i className="fas fa-arrow-right"></i>
               </button>
             </div>
           )}
 
-          {/* STEP 1: MAIN GUEST */}
           {step === FormStep.MAIN_GUEST && (
             <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-4">
               <div className="border-b border-slate-100 pb-4">
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Dados do Titular</h2>
               </div>
 
-              <div className="grid gap-5 sm:gap-6">
-                <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Nome Completo</label>
-                  <input
-                    name="fullName"
-                    value={formData.mainGuest.fullName}
-                    onChange={handleMainGuestChange}
-                    className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl"
-                  />
+              <div className="grid gap-5">
+                <input name="fullName" value={formData.mainGuest.fullName} onChange={handleMainGuestChange} placeholder="Nome Completo" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <input name="cpf" value={formData.mainGuest.cpf} onChange={handleMainGuestChange} placeholder="CPF" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl" />
+                  <input name="rg" value={formData.mainGuest.rg} onChange={handleMainGuestChange} placeholder="RG" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl" />
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
-                  <div className="space-y-2">
-                    <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">CPF</label>
-                    <input
-                      name="cpf"
-                      value={formData.mainGuest.cpf}
-                      onChange={handleMainGuestChange}
-                      className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">RG</label>
-                    <input
-                      name="rg"
-                      value={formData.mainGuest.rg}
-                      onChange={handleMainGuestChange}
-                      className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
-                  <div className="space-y-2">
-                    <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">E-mail</label>
-                    <input
-                      name="email"
-                      type="email"
-                      value={formData.mainGuest.email}
-                      onChange={handleMainGuestChange}
-                      className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">WhatsApp</label>
-                    <input
-                      name="phone"
-                      value={formData.mainGuest.phone}
-                      onChange={handleMainGuestChange}
-                      className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Endereço Residencial do Locatário</label>
-                  <textarea
-                    name="address"
-                    rows={2}
-                    placeholder="Rua, Número, Complemento, Bairro, Cidade-UF, CEP"
-                    value={formData.mainGuest.address}
-                    onChange={handleMainGuestChange}
-                    className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl resize-none text-sm sm:text-base"
-                  ></textarea>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6 border-t border-slate-100">
-                  <FileUpload
-                    id="main_doc"
-                    label="Foto do Documento (RG/CNH)"
-                    onFileSelect={handleDocumentUpload('main')}
-                  />
-                  <SelfieCapture 
-                    label="Selfie para Verificação" 
-                    onCapture={handleSelfieCapture} 
-                  />
+                <textarea name="address" rows={2} value={formData.mainGuest.address} onChange={handleMainGuestChange} placeholder="Endereço Residencial Completo" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl resize-none"></textarea>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6">
+                  <FileUpload id="main_doc" label="Foto do Documento (Frente)" onFileSelect={handleDocumentUpload('main')} />
+                  <SelfieCapture label="Selfie para Verificação" onCapture={handleSelfieCapture} />
                 </div>
               </div>
 
               <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 mt-8">
                 <button onClick={prevStep} className="w-full sm:flex-1 py-4 bg-slate-100 font-bold rounded-xl">Voltar</button>
-                <button
-                  onClick={nextStep}
-                  disabled={!formData.mainGuest.fullName || !formData.mainGuest.address || !formData.mainGuest.documentFile || !formData.mainGuest.selfieFile}
-                  className="w-full sm:flex-[2] py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg disabled:bg-slate-300"
-                >
-                  Próxima Etapa
-                </button>
+                <button onClick={nextStep} disabled={!formData.mainGuest.fullName || !formData.mainGuest.documentFile || !formData.mainGuest.selfieFile} className="w-full sm:flex-[2] py-4 bg-blue-600 text-white font-bold rounded-xl">Próxima Etapa</button>
               </div>
             </div>
           )}
 
           {step === FormStep.COMPANIONS && (
-            <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-4">
-              <div className="border-b border-slate-100 pb-4">
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Acompanhantes</h2>
-              </div>
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
+              <div className="border-b border-slate-100 pb-4"><h2 className="text-xl sm:text-2xl font-bold text-slate-800">Acompanhantes</h2></div>
               {formData.reservation.guestCount <= 1 ? (
-                <div className="py-16 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-                  <p className="text-slate-500 font-medium">Nenhum acompanhante. Reserva individual.</p>
-                </div>
+                <div className="py-16 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200"><p className="text-slate-500 font-medium">Reserva individual selecionada.</p></div>
               ) : (
                 <div className="space-y-6">
                   {Array.from({ length: formData.reservation.guestCount - 1 }).map((_, idx) => (
-                    <div key={idx} className="p-5 sm:p-8 bg-slate-50 rounded-2xl border border-slate-100 space-y-5">
-                      <div className="flex items-center gap-3">
-                        <span className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-black">{idx + 1}</span>
-                        <h3 className="font-bold text-slate-700 uppercase tracking-wide">Hóspede Adicional</h3>
-                      </div>
+                    <div key={idx} className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
+                      <div className="flex items-center gap-3"><span className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-black">{idx + 1}</span><h3 className="font-bold text-slate-700">Hóspede Adicional</h3></div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <input
-                          placeholder="Nome Completo"
-                          value={formData.companions[idx]?.name || ''}
-                          onChange={(e) => handleCompanionChange(idx, 'name', e.target.value)}
-                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm"
-                        />
-                        <input
-                          placeholder="CPF ou RG"
-                          value={formData.companions[idx]?.documentNumber || ''}
-                          onChange={(e) => handleCompanionChange(idx, 'documentNumber', e.target.value)}
-                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm"
-                        />
+                        <input placeholder="Nome Completo" value={formData.companions[idx]?.name || ''} onChange={(e) => handleCompanionChange(idx, 'name', e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm" />
+                        <input placeholder="CPF ou RG" value={formData.companions[idx]?.documentNumber || ''} onChange={(e) => handleCompanionChange(idx, 'documentNumber', e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm" />
                       </div>
                     </div>
                   ))}
@@ -595,26 +404,23 @@ const App: React.FC = () => {
               )}
               <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 mt-8">
                 <button onClick={prevStep} className="w-full sm:flex-1 py-4 bg-slate-100 font-bold rounded-xl">Voltar</button>
-                <button onClick={processContract} className="w-full sm:flex-[2] py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg">
-                  {loading ? 'Gerando...' : 'Gerar Contrato'}
+                <button onClick={processContract} disabled={loading} className="w-full sm:flex-[2] py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2">
+                  {loading ? <><i className="fas fa-circle-notch fa-spin"></i> Processando...</> : 'Gerar Contrato'}
                 </button>
               </div>
             </div>
           )}
 
           {step === FormStep.CONTRACT_PREVIEW && (
-            <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-4">
-              <div className="border-b border-slate-100 pb-4">
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Revisão do Contrato</h2>
-                <p className="text-slate-500 text-xs">Verifique os dados abaixo. O texto está em fonte Nunito e sem símbolos especiais.</p>
-              </div>
-              <div className="contract-preview bg-slate-50 p-6 sm:p-10 rounded-2xl border border-slate-200 h-[500px] overflow-y-auto text-slate-800 text-sm sm:text-base shadow-inner">
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
+              <div className="border-b border-slate-100 pb-4"><h2 className="text-xl sm:text-2xl font-bold text-slate-800">Revisão Final</h2></div>
+              <div className="contract-preview bg-slate-50 p-6 sm:p-10 rounded-2xl border border-slate-200 h-[500px] overflow-y-auto text-slate-800 text-sm shadow-inner whitespace-pre-wrap leading-relaxed">
                 {formData.contractText}
               </div>
               <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 mt-8">
-                <button onClick={prevStep} className="w-full sm:flex-1 py-4 bg-slate-100 font-bold rounded-xl">Corrigir</button>
-                <button onClick={finalizeProcess} className="w-full sm:flex-[2] py-4 bg-emerald-600 text-white font-bold rounded-xl shadow-lg">
-                  Finalizar e Enviar
+                <button onClick={prevStep} className="w-full sm:flex-1 py-4 bg-slate-100 font-bold rounded-xl">Corrigir Dados</button>
+                <button onClick={finalizeProcess} disabled={loading} className="w-full sm:flex-[2] py-4 bg-emerald-600 text-white font-bold rounded-xl shadow-lg">
+                  {loading ? 'Finalizando...' : 'Finalizar e Enviar para Assinatura'}
                 </button>
               </div>
             </div>
@@ -622,11 +428,9 @@ const App: React.FC = () => {
 
           {step === FormStep.SUCCESS && (
             <div className="text-center py-16 space-y-8 animate-in zoom-in">
-              <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
-                <i className="fas fa-check text-4xl"></i>
-              </div>
-              <h2 className="text-3xl font-black text-slate-800">Concluído!</h2>
-              <p className="text-slate-500 max-w-sm mx-auto">Sua reserva foi processada com sucesso por Wellington Rodovalho Fonseca.</p>
+              <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner"><i className="fas fa-check text-4xl"></i></div>
+              <h2 className="text-3xl font-black text-slate-800">Tudo Pronto!</h2>
+              <p className="text-slate-500 max-w-sm mx-auto">Sua reserva foi concluída. Em breve você receberá o link para assinatura digital no seu e-mail.</p>
               <button onClick={() => window.location.reload()} className="px-10 py-4 bg-slate-800 text-white font-bold rounded-xl">Novo Cadastro</button>
             </div>
           )}

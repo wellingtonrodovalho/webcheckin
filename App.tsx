@@ -126,11 +126,7 @@ const App: React.FC = () => {
 
   const processContract = async () => {
     if (formData.reservation.totalValue <= 0) {
-      alert("Por favor, informe o valor total da reserva.");
-      return;
-    }
-    if (formData.pet.hasPet && !formData.pet.vaccineFile) {
-      alert("Por favor, carregue o comprovante de vacinação do pet.");
+      alert("Por favor, informe o valor total da reserva antes de prosseguir.");
       return;
     }
     
@@ -140,8 +136,9 @@ const App: React.FC = () => {
       setFormData(prev => ({ ...prev, contractText: text }));
       setStep(FormStep.CONTRACT_PREVIEW);
     } catch (error: any) {
-      console.error("Erro no processamento:", error);
-      alert("Não foi possível gerar o contrato. Verifique se todos os campos estão preenchidos corretamente ou tente novamente em instantes.");
+      console.error("Erro no processamento do contrato:", error);
+      // Mensagem clara de orientação para o usuário
+      alert("Houve uma instabilidade momentânea na geração do contrato. Por favor, aguarde 5 segundos e clique no botão 'Gerar Contrato' novamente.");
     } finally {
       setLoading(false);
     }

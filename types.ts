@@ -150,6 +150,7 @@ export enum FormStep {
   CONSENT = -1,
   RESERVATION = 0,
   MAIN_GUEST = 1,
-  COMPANIONS = 2,
-  SUCCESS = 3
+  PET_INFO = 2,
+  COMPANIONS = 3,
+  SUCCESS = 4
 }

@@ -85,6 +85,15 @@ const App: React.FC = () => {
     }));
   };
 
+  const handlePetChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target as HTMLInputElement;
+    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+    setFormData(prev => ({
+      ...prev,
+      pet: { ...prev.pet, [name]: val }
+    }));
+  };
+
   const handleCompanionChange = (index: number, name: string, value: string) => {
     const newCompanions = [...formData.companions];
     if (!newCompanions[index]) {
@@ -97,6 +106,8 @@ const App: React.FC = () => {
   const handleDocumentUpload = (role: 'main' | 'companion' | 'pet', index?: number) => (base64: string) => {
     if (role === 'main') {
       setFormData(prev => ({ ...prev, mainGuest: { ...prev.mainGuest, documentFile: base64 } }));
+    } else if (role === 'pet') {
+      setFormData(prev => ({ ...prev, pet: { ...prev.pet, vaccineFile: base64 } }));
     } else if (index !== undefined) {
       const newCompanions = [...formData.companions];
       newCompanions[index] = { ...newCompanions[index], documentFile: base64 };
@@ -116,7 +127,6 @@ const App: React.FC = () => {
     setLoading(true);
     try {
       const propertyDetails = PROPERTIES.find(p => p.id === formData.reservation.propertyId) || PROPERTIES[0];
-      // Log de tamanho do payload para diagnóstico
       const payloadSize = JSON.stringify(formData).length;
       console.log(`Enviando dados... Tamanho aprox: ${(payloadSize / 1024).toFixed(2)} KB`);
       
@@ -292,13 +302,68 @@ const App: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                  <FileUpload id="main_doc" label="Foto do Documento (Frente)" onFileSelect={handleDocumentUpload('main')} />
+                  <FileUpload id="main_doc" label="Identidade (Clique p/ Anexar ou Tirar Foto)" onFileSelect={handleDocumentUpload('main')} />
                   <SelfieCapture label="Selfie para Garantia Contratual" onCapture={handleSelfieCapture} />
                 </div>
               </div>
               <div className="flex gap-4 pt-4">
                 <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl text-slate-600">Voltar</button>
-                <button onClick={nextStep} disabled={!formData.mainGuest.fullName || !formData.mainGuest.documentFile || !formData.mainGuest.selfieFile || !formData.mainGuest.maritalStatus || !formData.mainGuest.profession} className="flex-[2] py-4 bg-blue-600 text-white font-black rounded-xl shadow-lg transition-all active:scale-[0.98]">Próximo: Acompanhantes</button>
+                <button onClick={nextStep} disabled={!formData.mainGuest.fullName || !formData.mainGuest.documentFile || !formData.mainGuest.selfieFile || !formData.mainGuest.maritalStatus || !formData.mainGuest.profession} className="flex-[2] py-4 bg-blue-600 text-white font-black rounded-xl shadow-lg transition-all active:scale-[0.98]">Próximo: Informações de Pet</button>
+              </div>
+            </div>
+          )}
+
+          {step === FormStep.PET_INFO && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
+              <h2 className="text-xl font-bold text-slate-800 border-b pb-2">Informações de Pet</h2>
+              
+              <div className="p-6 bg-blue-50/50 border border-blue-100 rounded-3xl space-y-4">
+                <label className="flex items-center gap-4 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    name="hasPet" 
+                    checked={formData.pet.hasPet} 
+                    onChange={handlePetChange} 
+                    className="w-6 h-6 rounded text-blue-600" 
+                  />
+                  <span className="font-black text-blue-900 uppercase text-sm">Vou levar animal de estimação</span>
+                </label>
+
+                {!selectedProperty.petAllowed && formData.pet.hasPet && (
+                  <p className="text-xs font-bold text-red-500 bg-red-50 p-3 rounded-xl border border-red-100">
+                    <i className="fas fa-exclamation-triangle mr-2"></i>
+                    Atenção: Este imóvel não permite animais por padrão. O envio do pet está sujeito a aprovação do proprietário.
+                  </p>
+                )}
+
+                {formData.pet.hasPet && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 animate-in fade-in zoom-in-95">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Nome do Pet</label>
+                      <input name="name" value={formData.pet.name} onChange={handlePetChange} placeholder="Ex: Bob" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none font-bold" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Raça / Espécie</label>
+                      <input name="breed" value={formData.pet.breed} onChange={handlePetChange} placeholder="Ex: Golden / Cão" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Peso (kg)</label>
+                      <input name="weight" value={formData.pet.weight} onChange={handlePetChange} placeholder="Ex: 10kg" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Idade</label>
+                      <input name="age" value={formData.pet.age} onChange={handlePetChange} placeholder="Ex: 3 anos" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <FileUpload id="pet_vaccine" label="Carteira de Vacinação (Obrigatório para Pets)" onFileSelect={handleDocumentUpload('pet')} />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl text-slate-600">Voltar</button>
+                <button onClick={nextStep} className="flex-[2] py-4 bg-blue-600 text-white font-black rounded-xl shadow-lg transition-all active:scale-[0.98]">Próximo: Acompanhantes</button>
               </div>
             </div>
           )}

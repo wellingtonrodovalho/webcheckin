@@ -9,13 +9,14 @@ interface StepIndicatorProps {
 const steps = [
   { id: FormStep.RESERVATION, label: 'Reserva', icon: 'fa-calendar-check' },
   { id: FormStep.MAIN_GUEST, label: 'Titular', icon: 'fa-user' },
+  { id: FormStep.PET_INFO, label: 'Pet', icon: 'fa-paw' },
   { id: FormStep.COMPANIONS, label: 'Hóspedes', icon: 'fa-users' },
   { id: FormStep.SUCCESS, label: 'Fim', icon: 'fa-check' },
 ];
 
 const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep }) => {
   return (
-    <div className="w-full py-4 sm:py-6 flex justify-between items-center px-2 sm:px-4 max-w-3xl mx-auto">
+    <div className="w-full py-4 sm:py-6 flex justify-between items-center px-2 sm:px-4 max-w-4xl mx-auto">
       {steps.map((step, index) => (
         <React.Fragment key={step.id}>
           <div className="flex flex-col items-center relative z-10">

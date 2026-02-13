@@ -17,65 +17,102 @@ const SelfieCapture: React.FC<SelfieCaptureProps> = ({ onCapture, label }) => {
   useEffect(() => {
     if (isCapturing && stream && videoRef.current) {
       videoRef.current.srcObject = stream;
-      videoRef.current.onloadedmetadata = () => {
-        videoRef.current?.play().then(() => setIsCameraReady(true));
+      
+      // Evento mais seguro que onloadedmetadata para mobile
+      videoRef.current.onplaying = () => {
+        setIsCameraReady(true);
       };
+
+      videoRef.current.play().catch(err => {
+        console.error("Erro ao iniciar reprodução do vídeo:", err);
+      });
     }
   }, [isCapturing, stream]);
 
   const startCamera = async () => {
     try {
       setIsCameraReady(false);
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+      // Resolução modesta para garantir compatibilidade e fluidez
+      const constraints = {
         video: { 
           facingMode: 'user',
-          width: { ideal: 800 },
-          height: { ideal: 800 }
-        }, 
-        audio: false 
-      });
+          width: { ideal: 640 },
+          height: { ideal: 640 }
+        },
+        audio: false
+      };
+      
+      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
       setStream(mediaStream);
       setIsCapturing(true);
     } catch (err) {
       console.error("Erro ao acessar câmera:", err);
-      alert("Permissão de câmera negada ou dispositivo não encontrado.");
-    }
-  };
-
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current && isCameraReady) {
-      const context = canvasRef.current.getContext('2d');
-      if (context) {
-        const vW = videoRef.current.videoWidth;
-        const vH = videoRef.current.videoHeight;
-        
-        if (vW === 0 || vH === 0) return;
-
-        canvasRef.current.width = vW;
-        canvasRef.current.height = vH;
-        
-        context.save();
-        context.translate(vW, 0);
-        context.scale(-1, 1);
-        context.drawImage(videoRef.current, 0, 0, vW, vH);
-        context.restore();
-        
-        // Qualidade 0.7 para manter o arquivo leve e compatível com Apps Script
-        const base64 = canvasRef.current.toDataURL('image/jpeg', 0.7);
-        setCapturedImage(base64);
-        onCapture(base64);
-        stopCamera();
-      }
+      alert("Não foi possível abrir a câmera. Verifique se deu permissão no navegador.");
     }
   };
 
   const stopCamera = () => {
     if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach(track => {
+        track.stop();
+        track.enabled = false;
+      });
       setStream(null);
     }
     setIsCapturing(false);
     setIsCameraReady(false);
+  };
+
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    if (video && canvas && isCameraReady && video.readyState >= 2) {
+      const context = canvas.getContext('2d', { alpha: false });
+      if (context) {
+        const vW = video.videoWidth;
+        const vH = video.videoHeight;
+        
+        // Limite rigoroso para evitar estouro de memória no Base64
+        const maxDim = 720; 
+        let tW = vW;
+        let tH = vH;
+
+        if (vW > maxDim || vH > maxDim) {
+          const ratio = vW / vH;
+          if (ratio > 1) {
+            tW = maxDim;
+            tH = maxDim / ratio;
+          } else {
+            tH = maxDim;
+            tW = maxDim * ratio;
+          }
+        }
+
+        canvas.width = tW;
+        canvas.height = tH;
+        
+        // Desenha o frame usando requestAnimationFrame para estabilidade
+        requestAnimationFrame(() => {
+          context.save();
+          context.translate(tW, 0);
+          context.scale(-1, 1);
+          context.drawImage(video, 0, 0, tW, tH);
+          context.restore();
+          
+          // COMPRESSÃO AGRESSIVA (0.5) para garantir que o smartphone não trave ao gerar a string
+          const base64 = canvas.toDataURL('image/jpeg', 0.5);
+          
+          // ORDEM CRÍTICA: Primeiro para o hardware, depois atualiza o estado
+          stopCamera(); 
+          
+          setCapturedImage(base64);
+          onCapture(base64);
+        });
+      }
+    } else {
+      alert("Aguarde a imagem da câmera aparecer.");
+    }
   };
 
   const retake = () => {
@@ -85,7 +122,9 @@ const SelfieCapture: React.FC<SelfieCaptureProps> = ({ onCapture, label }) => {
 
   useEffect(() => {
     return () => {
-      if (stream) stream.getTracks().forEach(t => t.stop());
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+      }
     };
   }, [stream]);
 
@@ -95,7 +134,7 @@ const SelfieCapture: React.FC<SelfieCaptureProps> = ({ onCapture, label }) => {
       
       <div className="relative w-full aspect-square max-w-[280px] mx-auto overflow-hidden rounded-3xl border-4 border-slate-200 bg-slate-900 flex items-center justify-center shadow-lg">
         {capturedImage ? (
-          <img src={capturedImage} alt="Selfie" className="w-full h-full object-cover" />
+          <img src={capturedImage} alt="Selfie" className="w-full h-full object-cover animate-in fade-in" />
         ) : isCapturing ? (
           <video 
             ref={videoRef} 
@@ -110,30 +149,48 @@ const SelfieCapture: React.FC<SelfieCaptureProps> = ({ onCapture, label }) => {
             <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700">
               <i className="fas fa-camera text-slate-600 text-2xl"></i>
             </div>
-            <p className="text-slate-500 text-[10px] font-bold uppercase">Câmera Desativada</p>
+            <p className="text-slate-500 text-[10px] font-bold uppercase">Câmera pronta</p>
           </div>
         )}
+        
+        {/* Indicador de carregamento da câmera */}
+        {isCapturing && !isCameraReady && (
+          <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center">
+            <i className="fas fa-circle-notch fa-spin text-white text-2xl"></i>
+          </div>
+        )}
+
+        <canvas ref={canvasRef} className="hidden" />
       </div>
 
       <div className="flex justify-center mt-4">
         {!isCapturing && !capturedImage && (
-          <button onClick={startCamera} className="px-6 py-3 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-blue-700 active:scale-95 transition-all">
+          <button 
+            type="button"
+            onClick={startCamera} 
+            className="px-6 py-3 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all"
+          >
             <i className="fas fa-camera mr-2"></i> Abrir Câmera
           </button>
         )}
         
         {isCapturing && (
           <button 
+            type="button"
             onClick={capturePhoto}
             disabled={!isCameraReady}
-            className={`w-14 h-14 rounded-full border-4 flex items-center justify-center shadow-2xl transition-all ${isCameraReady ? 'border-blue-600 bg-white' : 'border-slate-400 bg-slate-200 opacity-50'}`}
+            className={`w-16 h-16 rounded-full border-4 flex items-center justify-center shadow-2xl transition-all ${isCameraReady ? 'border-blue-600 bg-white scale-110' : 'border-slate-400 bg-slate-200 opacity-50'}`}
           >
-            <div className={`w-10 h-10 rounded-full ${isCameraReady ? 'bg-blue-600' : 'bg-slate-400'}`}></div>
+            <div className={`w-12 h-12 rounded-full ${isCameraReady ? 'bg-blue-600 shadow-inner' : 'bg-slate-400'}`}></div>
           </button>
         )}
         
         {capturedImage && (
-          <button onClick={retake} className="px-6 py-3 bg-slate-800 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-black transition-all">
+          <button 
+            type="button"
+            onClick={retake} 
+            className="px-6 py-3 bg-slate-800 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-black active:scale-95 transition-all"
+          >
             <i className="fas fa-redo mr-2"></i> Repetir Foto
           </button>
         )}

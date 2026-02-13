@@ -49,7 +49,6 @@ const App: React.FC = () => {
 
   const selectedProperty = PROPERTIES.find(p => p.id === formData.reservation.propertyId) || PROPERTIES[0];
 
-  // Garante que o scroll vá para o topo do formulário a cada mudança de passo
   useEffect(() => {
     if (formTopRef.current) {
       setTimeout(() => {
@@ -78,12 +77,6 @@ const App: React.FC = () => {
     }));
   };
 
-  const handlePetChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target as HTMLInputElement;
-    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
-    setFormData(prev => ({ ...prev, pet: { ...prev.pet, [name]: val } }));
-  };
-
   const handleMainGuestChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ 
@@ -104,8 +97,6 @@ const App: React.FC = () => {
   const handleDocumentUpload = (role: 'main' | 'companion' | 'pet', index?: number) => (base64: string) => {
     if (role === 'main') {
       setFormData(prev => ({ ...prev, mainGuest: { ...prev.mainGuest, documentFile: base64 } }));
-    } else if (role === 'pet') {
-      setFormData(prev => ({ ...prev, pet: { ...prev.pet, vaccineFile: base64 } }));
     } else if (index !== undefined) {
       const newCompanions = [...formData.companions];
       newCompanions[index] = { ...newCompanions[index], documentFile: base64 };
@@ -125,10 +116,19 @@ const App: React.FC = () => {
     setLoading(true);
     try {
       const propertyDetails = PROPERTIES.find(p => p.id === formData.reservation.propertyId) || PROPERTIES[0];
-      await saveToGoogleSheets({ ...formData, propertyDetails });
-      setStep(FormStep.SUCCESS);
+      // Log de tamanho do payload para diagnóstico
+      const payloadSize = JSON.stringify(formData).length;
+      console.log(`Enviando dados... Tamanho aprox: ${(payloadSize / 1024).toFixed(2)} KB`);
+      
+      const success = await saveToGoogleSheets({ ...formData, propertyDetails });
+      if (success) {
+        setStep(FormStep.SUCCESS);
+      } else {
+        alert("Ocorreu um problema ao salvar os dados. Tente novamente.");
+      }
     } catch (error) {
-      alert("Erro ao enviar. Tente novamente.");
+      console.error("Erro no envio:", error);
+      alert("Erro de conexão. Verifique sua internet e tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -152,7 +152,6 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Âncora oculta para garantir o scroll para o topo do form */}
       <div ref={formTopRef} className="h-0 w-0 pointer-events-none opacity-0" />
 
       <main className="flex-1 w-full max-w-4xl mx-auto px-4 mt-6">
@@ -183,13 +182,13 @@ const App: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-500 uppercase ml-1">Imóvel</label>
-                    <select name="propertyId" value={formData.reservation.propertyId} onChange={handleReservationChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <select name="propertyId" value={formData.reservation.propertyId} onChange={handleReservationChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none">
                       {PROPERTIES.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-500 uppercase ml-1">Quantidade de Hóspedes</label>
-                    <select name="guestCount" value={formData.reservation.guestCount} onChange={handleReservationChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <select name="guestCount" value={formData.reservation.guestCount} onChange={handleReservationChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none">
                       {Array.from({ length: selectedProperty.capacity }).map((_, i) => <option key={i+1} value={i+1}>{i+1} Hóspede(s)</option>)}
                     </select>
                   </div>
@@ -198,11 +197,11 @@ const App: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-500 uppercase ml-1">Data de Entrada (Check-in)</label>
-                    <input type="date" name="startDate" value={formData.reservation.startDate} onChange={handleReservationChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <input type="date" name="startDate" value={formData.reservation.startDate} onChange={handleReservationChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-500 uppercase ml-1">Data de Saída (Check-out)</label>
-                    <input type="date" name="endDate" value={formData.reservation.endDate} onChange={handleReservationChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <input type="date" name="endDate" value={formData.reservation.endDate} onChange={handleReservationChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" />
                   </div>
                 </div>
 
@@ -218,7 +217,7 @@ const App: React.FC = () => {
                   <div className={`p-5 rounded-2xl border transition-all duration-300 ${formData.reservation.hasSecurityDeposit ? 'bg-emerald-50 border-emerald-100 shadow-sm' : 'bg-slate-50 border-slate-200'}`}>
                     <div className="flex justify-between items-center mb-1">
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Garantia de Caução</label>
-                      <input type="checkbox" name="hasSecurityDeposit" checked={formData.reservation.hasSecurityDeposit} onChange={handleReservationChange} className="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer" />
+                      <input type="checkbox" name="hasSecurityDeposit" checked={formData.reservation.hasSecurityDeposit} onChange={handleReservationChange} className="w-5 h-5 rounded text-emerald-600 cursor-pointer" />
                     </div>
                     {formData.reservation.hasSecurityDeposit && (
                       <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
@@ -230,7 +229,7 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              <button onClick={nextStep} disabled={!formData.reservation.startDate || !formData.reservation.endDate || formData.reservation.totalValue <= 0} className="w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 transition-all hover:bg-blue-700 active:scale-[0.98]">Próximo: Dados do Titular</button>
+              <button onClick={nextStep} disabled={!formData.reservation.startDate || !formData.reservation.endDate || formData.reservation.totalValue <= 0} className="w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 transition-all active:scale-[0.98]">Próximo: Dados do Titular</button>
             </div>
           )}
 
@@ -240,13 +239,13 @@ const App: React.FC = () => {
               <div className="grid gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-400 uppercase ml-1">Nome Completo</label>
-                  <input name="fullName" value={formData.mainGuest.fullName} onChange={handleMainGuestChange} placeholder="Digite seu nome completo" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input name="fullName" value={formData.mainGuest.fullName} onChange={handleMainGuestChange} placeholder="Digite seu nome completo" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Estado Civil</label>
-                    <select name="maritalStatus" value={formData.mainGuest.maritalStatus} onChange={handleMainGuestChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
+                    <select name="maritalStatus" value={formData.mainGuest.maritalStatus} onChange={handleMainGuestChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none">
                       <option value="">Selecione...</option>
                       <option value="Solteiro(a)">Solteiro(a)</option>
                       <option value="Casado(a)">Casado(a)</option>
@@ -257,39 +256,39 @@ const App: React.FC = () => {
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Profissão</label>
-                    <input name="profession" value={formData.mainGuest.profession} onChange={handleMainGuestChange} placeholder="Ex: Engenheiro, Professor..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input name="profession" value={formData.mainGuest.profession} onChange={handleMainGuestChange} placeholder="Ex: Advogado" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">CPF</label>
-                    <input name="cpf" value={formData.mainGuest.cpf} onChange={handleMainGuestChange} placeholder="000.000.000-00" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <input name="cpf" value={formData.mainGuest.cpf} onChange={handleMainGuestChange} placeholder="000.000.000-00" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">RG</label>
-                    <input name="rg" value={formData.mainGuest.rg} onChange={handleMainGuestChange} placeholder="Número do RG" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <input name="rg" value={formData.mainGuest.rg} onChange={handleMainGuestChange} placeholder="Número do RG" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Nacionalidade</label>
-                    <input name="nationality" value={formData.mainGuest.nationality} onChange={handleMainGuestChange} placeholder="Ex: Brasileira" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <input name="nationality" value={formData.mainGuest.nationality} onChange={handleMainGuestChange} placeholder="Ex: Brasileira" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">E-mail para Receber o Contrato</label>
-                    <input name="email" value={formData.mainGuest.email} onChange={handleMainGuestChange} placeholder="exemplo@email.com" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">E-mail para Contrato</label>
+                    <input name="email" value={formData.mainGuest.email} onChange={handleMainGuestChange} placeholder="exemplo@email.com" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">WhatsApp de Contato</label>
-                    <input name="phone" value={formData.mainGuest.phone} onChange={handleMainGuestChange} placeholder="(00) 00000-0000" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">WhatsApp</label>
+                    <input name="phone" value={formData.mainGuest.phone} onChange={handleMainGuestChange} placeholder="(00) 00000-0000" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" />
                   </div>
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Endereço Residencial Completo</label>
-                  <textarea name="address" rows={2} value={formData.mainGuest.address} onChange={handleMainGuestChange} placeholder="Rua, Número, Bairro, Cidade-UF, CEP" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                  <textarea name="address" rows={2} value={formData.mainGuest.address} onChange={handleMainGuestChange} placeholder="Rua, Número, Bairro, Cidade-UF, CEP" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl resize-none outline-none"></textarea>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
@@ -298,8 +297,8 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div className="flex gap-4 pt-4">
-                <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl text-slate-600 hover:bg-slate-200 transition-all">Voltar</button>
-                <button onClick={nextStep} disabled={!formData.mainGuest.fullName || !formData.mainGuest.documentFile || !formData.mainGuest.selfieFile || !formData.mainGuest.maritalStatus || !formData.mainGuest.profession} className="flex-[2] py-4 bg-blue-600 text-white font-black rounded-xl shadow-lg transition-all hover:bg-blue-700 active:scale-[0.98]">Próximo: Acompanhantes</button>
+                <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl text-slate-600">Voltar</button>
+                <button onClick={nextStep} disabled={!formData.mainGuest.fullName || !formData.mainGuest.documentFile || !formData.mainGuest.selfieFile || !formData.mainGuest.maritalStatus || !formData.mainGuest.profession} className="flex-[2] py-4 bg-blue-600 text-white font-black rounded-xl shadow-lg transition-all active:scale-[0.98]">Próximo: Acompanhantes</button>
               </div>
             </div>
           )}
@@ -315,11 +314,11 @@ const App: React.FC = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Nome Completo</label>
-                          <input placeholder="Nome" value={formData.companions[idx]?.name || ''} onChange={(e) => handleCompanionChange(idx, 'name', e.target.value)} className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500" />
+                          <input placeholder="Nome" value={formData.companions[idx]?.name || ''} onChange={(e) => handleCompanionChange(idx, 'name', e.target.value)} className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none" />
                         </div>
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Documento (CPF ou RG)</label>
-                          <input placeholder="Documento" value={formData.companions[idx]?.documentNumber || ''} onChange={(e) => handleCompanionChange(idx, 'documentNumber', e.target.value)} className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500" />
+                          <input placeholder="Documento" value={formData.companions[idx]?.documentNumber || ''} onChange={(e) => handleCompanionChange(idx, 'documentNumber', e.target.value)} className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none" />
                         </div>
                       </div>
                     </div>
@@ -332,8 +331,8 @@ const App: React.FC = () => {
                 </div>
               )}
               <div className="flex gap-4 pt-4">
-                <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl text-slate-600 hover:bg-slate-200 transition-all">Voltar</button>
-                <button onClick={finalizeProcess} disabled={loading} className="flex-[2] py-4 bg-emerald-600 text-white font-black rounded-xl shadow-xl shadow-emerald-100 flex items-center justify-center gap-3 transition-all hover:bg-emerald-700 active:scale-[0.98]">
+                <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl text-slate-600">Voltar</button>
+                <button onClick={finalizeProcess} disabled={loading} className="flex-[2] py-4 bg-emerald-600 text-white font-black rounded-xl shadow-xl shadow-emerald-100 flex items-center justify-center gap-3 transition-all active:scale-[0.98]">
                   {loading ? <i className="fas fa-circle-notch fa-spin text-xl"></i> : <i className="fas fa-paper-plane"></i>}
                   {loading ? 'ENVIANDO CADASTRO...' : 'FINALIZAR E ENVIAR'}
                 </button>

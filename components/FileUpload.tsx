@@ -9,17 +9,69 @@ interface FileUploadProps {
 
 const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
   const [preview, setPreview] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const processImage = (file: File) => {
+    setIsProcessing(true);
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        // Redimensionar se a imagem for muito grande (comum em câmeras modernas de celular)
+        const maxDimension = 1200;
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = (height * maxDimension) / width;
+            width = maxDimension;
+          } else {
+            width = (width * maxDimension) / height;
+            height = maxDimension;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          // Comprimir como JPEG 0.7 para economizar memória Base64
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          setPreview(compressedBase64);
+          onFileSelect(compressedBase64);
+        }
+        setIsProcessing(false);
+      };
+      img.src = e.target?.result as string;
+    };
+    
+    reader.onerror = () => {
+      alert("Erro ao ler arquivo.");
+      setIsProcessing(false);
+    };
+
+    reader.readAsDataURL(file);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setPreview(base64String);
-        onFileSelect(base64String);
-      };
-      reader.readAsDataURL(file);
+      if (file.type.startsWith('image/')) {
+        processImage(file);
+      } else {
+        // Para PDFs ou outros, mantém o comportamento padrão (mas este app foca em fotos)
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64String = reader.result as string;
+          setPreview(base64String);
+          onFileSelect(base64String);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -30,24 +82,31 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
         <input
           type="file"
           id={id}
-          accept="image/*,application/pdf"
+          accept="image/*"
+          capture="environment" // Sugere usar a câmera traseira no mobile
           onChange={handleFileChange}
           className="hidden"
         />
         <label
           htmlFor={id}
           className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl cursor-pointer transition-all
-            ${preview ? 'border-emerald-400 bg-emerald-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-blue-400'}`}
+            ${preview ? 'border-emerald-400 bg-emerald-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-blue-400'}
+            ${isProcessing ? 'opacity-50 cursor-wait' : ''}`}
         >
-          {preview ? (
+          {isProcessing ? (
+            <div className="flex flex-col items-center">
+              <i className="fas fa-circle-notch fa-spin text-blue-500 text-2xl mb-2"></i>
+              <span className="text-slate-500 text-xs font-bold uppercase">Processando...</span>
+            </div>
+          ) : preview ? (
             <div className="flex items-center gap-3">
               <i className="fas fa-check-circle text-emerald-500 text-2xl"></i>
-              <span className="text-emerald-700 font-medium text-sm">Documento Carregado</span>
+              <span className="text-emerald-700 font-medium text-sm">Foto Selecionada</span>
             </div>
           ) : (
             <div className="text-center p-4">
-              <i className="fas fa-cloud-upload-alt text-slate-400 text-3xl mb-2"></i>
-              <p className="text-slate-500 text-xs">Clique para selecionar ou tirar foto do RG/CNH</p>
+              <i className="fas fa-camera text-slate-400 text-3xl mb-2"></i>
+              <p className="text-slate-500 text-[10px] font-bold uppercase">Tirar Foto do Documento</p>
             </div>
           )}
         </label>

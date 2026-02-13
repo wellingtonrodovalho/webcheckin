@@ -1,53 +1,73 @@
 
 /**
- * GOOGLE APPS SCRIPT - VERSÃO ULTRA ROBUSTA
+ * GOOGLE APPS SCRIPT - VERSÃO AUTO-CONFIGURÁVEL
  * 
- * Instruções:
- * 1. Substitua todo o código anterior por este.
- * 2. Clique em Salvar (disquete).
- * 3. Clique em Implantar > Gerenciar Implantações.
- * 4. Edite a implantação atual, escolha "Nova Versão" e clique em Implantar.
+ * 1. Limpe sua planilha completamente.
+ * 2. Cole este código.
+ * 3. Salve e Implante como "Nova Versão".
+ * 4. Configure "Quem pode acessar" como "Qualquer pessoa".
  */
 
 function doPost(e) {
   var lock = LockService.getScriptLock();
-  lock.tryLock(10000); // Espera até 10 segundos para evitar conflitos de escrita simultânea
+  lock.tryLock(10000);
 
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getActiveSheet();
-    
-    // Tenta ler os dados enviados
+    var sheet = ss.getSheets()[0]; // Pega a primeira aba
     var contents = e.postData.contents;
     var data = JSON.parse(contents);
     
-    // Obtém os cabeçalhos atuais ou cria se estiver vazio
-    var lastCol = sheet.getLastColumn();
+    // 1. Identificar cabeçalhos atuais
+    var lastCol = Math.max(sheet.getLastColumn(), 1);
     var headers = [];
     
-    if (lastCol > 0) {
-      headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
-    } else {
-      // Se a planilha estiver totalmente limpa, usa as chaves do JSON como cabeçalho
-      headers = Object.keys(data);
-      sheet.appendRow(headers);
-      // Formatação básica para o cabeçalho
-      sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#E2E8F0");
+    if (sheet.getLastColumn() > 0) {
+      headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function(h) {
+        return h.toString().trim();
+      }).filter(String);
     }
 
-    // Prepara a nova linha baseada nos cabeçalhos existentes
-    var newRow = headers.map(function(h) {
-      return data[h] !== undefined ? data[h] : "";
+    // 2. Verificar se o JSON tem chaves que não existem nas colunas
+    var jsonKeys = Object.keys(data);
+    var missingKeys = jsonKeys.filter(function(key) {
+      return headers.indexOf(key) === -1;
     });
 
-    // Adiciona a linha de dados
-    sheet.appendRow(newRow);
+    // 3. Se houver chaves novas, adiciona como novas colunas
+    if (missingKeys.length > 0) {
+      var startCol = headers.length + 1;
+      sheet.getRange(1, startCol, 1, missingKeys.length)
+           .setValues([missingKeys])
+           .setFontWeight("bold")
+           .setBackground("#F1F5F9")
+           .setVerticalAlignment("middle");
+      
+      // Atualiza a lista de cabeçalhos para incluir as novas
+      headers = headers.concat(missingKeys);
+      // Ajusta a largura das novas colunas
+      for(var i=0; i < missingKeys.length; i++) {
+        sheet.setColumnWidth(startCol + i, 150);
+      }
+    }
+
+    // 4. Montar a linha de dados seguindo a ordem exata dos cabeçalhos
+    var rowData = headers.map(function(header) {
+      return data[header] !== undefined ? data[header] : "";
+    });
+
+    // 5. Adicionar os dados na última linha
+    sheet.appendRow(rowData);
+    
+    // Formatação de conveniência para a nova linha
+    var lastRow = sheet.getLastRow();
+    sheet.getRange(lastRow, 1, 1, headers.length).setVerticalAlignment("top");
     
     return ContentService.createTextOutput("Sucesso").setMimeType(ContentService.MimeType.TEXT);
-    
-  } catch (f) {
-    console.error("Erro no script: " + f.toString());
-    return ContentService.createTextOutput("Erro: " + f.toString()).setMimeType(ContentService.MimeType.TEXT);
+
+  } catch (error) {
+    console.error("Erro: " + error.toString());
+    return ContentService.createTextOutput("Erro: " + error.toString()).setMimeType(ContentService.MimeType.TEXT);
   } finally {
     lock.releaseLock();
   }

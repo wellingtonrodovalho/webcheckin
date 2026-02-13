@@ -1,16 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { FormStep, FullFormData, PROPERTIES } from './types';
-import { generateContract } from './services/geminiService';
-import { saveToGoogleSheets, sendToAutentique } from './services/externalServices';
+import { saveToGoogleSheets } from './services/externalServices';
 import StepIndicator from './components/StepIndicator';
 import FileUpload from './components/FileUpload';
 import SelfieCapture from './components/SelfieCapture';
 import Logo from './components/Logo';
-
-const simulatePdfGeneration = (text: string) => {
-  return btoa(unescape(encodeURIComponent(text)));
-};
 
 const App: React.FC = () => {
   const [step, setStep] = useState<FormStep>(FormStep.CONSENT);
@@ -39,7 +34,9 @@ const App: React.FC = () => {
       rg: '',
       email: '',
       phone: '',
-      address: ''
+      address: '',
+      maritalStatus: '',
+      profession: ''
     },
     companions: [],
     lgpdConsent: false
@@ -82,7 +79,7 @@ const App: React.FC = () => {
     }));
   };
 
-  const handleMainGuestChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleMainGuestChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -124,33 +121,15 @@ const App: React.FC = () => {
     }));
   };
 
-  const processContract = async () => {
+  const finalizeProcess = async () => {
     if (formData.reservation.totalValue <= 0) {
-      alert("Por favor, informe o valor total da reserva antes de prosseguir.");
+      alert("Por favor, informe o valor total da reserva antes de finalizar.");
       return;
     }
     
     setLoading(true);
     try {
-      const text = await generateContract(formData);
-      setFormData(prev => ({ ...prev, contractText: text }));
-      setStep(FormStep.CONTRACT_PREVIEW);
-    } catch (error: any) {
-      console.error("Erro no processamento do contrato:", error);
-      alert("Houve uma instabilidade momentânea na geração do contrato via IA. Por favor, clique em 'Gerar Contrato' novamente.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const finalizeProcess = async () => {
-    setLoading(true);
-    try {
       await saveToGoogleSheets(formData);
-      if (formData.contractText) {
-        const pdfBase64 = simulatePdfGeneration(formData.contractText);
-        await sendToAutentique(pdfBase64, formData.mainGuest.email, formData.mainGuest.fullName);
-      }
       setStep(FormStep.SUCCESS);
     } catch (error) {
       console.error("Erro na finalização:", error);
@@ -225,7 +204,7 @@ const App: React.FC = () => {
                   <i className="fas fa-info-circle text-blue-500"></i> Segurança e Transparência
                 </h3>
                 <div className="text-[11px] sm:text-sm text-slate-600 space-y-3 leading-relaxed">
-                  <p>Os dados coletados são essenciais para o seu cadastro de hóspede e para a elaboração do contrato de locação por temporada.</p>
+                  <p>Os dados coletados são essenciais para o seu cadastro de hóspede e para a elaboração do contrato de locação por temporada que será enviado pela nossa equipe.</p>
                 </div>
               </div>
 
@@ -346,7 +325,7 @@ const App: React.FC = () => {
               )}
 
               <button onClick={nextStep} disabled={!formData.reservation.startDate || !formData.reservation.endDate} className="w-full py-4 sm:py-5 bg-blue-600 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2">
-                Continuar <i className="fas fa-arrow-right"></i>
+                Próxima Etapa <i className="fas fa-arrow-right"></i>
               </button>
             </div>
           )}
@@ -359,10 +338,29 @@ const App: React.FC = () => {
 
               <div className="grid gap-5">
                 <input name="fullName" value={formData.mainGuest.fullName} onChange={handleMainGuestChange} placeholder="Nome Completo" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl" />
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <select name="maritalStatus" value={formData.mainGuest.maritalStatus} onChange={handleMainGuestChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <option value="">Estado Civil</option>
+                    <option value="Solteiro(a)">Solteiro(a)</option>
+                    <option value="Casado(a)">Casado(a)</option>
+                    <option value="Divorciado(a)">Divorciado(a)</option>
+                    <option value="Viúvo(a)">Viúvo(a)</option>
+                    <option value="União Estável">União Estável</option>
+                  </select>
+                  <input name="profession" value={formData.mainGuest.profession} onChange={handleMainGuestChange} placeholder="Profissão" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl" />
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <input name="cpf" value={formData.mainGuest.cpf} onChange={handleMainGuestChange} placeholder="CPF" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl" />
                   <input name="rg" value={formData.mainGuest.rg} onChange={handleMainGuestChange} placeholder="RG" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl" />
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <input name="email" value={formData.mainGuest.email} onChange={handleMainGuestChange} placeholder="E-mail" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl" />
+                  <input name="phone" value={formData.mainGuest.phone} onChange={handleMainGuestChange} placeholder="Telefone / WhatsApp" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl" />
+                </div>
+
                 <textarea name="address" rows={2} value={formData.mainGuest.address} onChange={handleMainGuestChange} placeholder="Endereço Residencial Completo" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl resize-none"></textarea>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6">
@@ -382,7 +380,9 @@ const App: React.FC = () => {
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
               <div className="border-b border-slate-100 pb-4"><h2 className="text-xl sm:text-2xl font-bold text-slate-800">Acompanhantes</h2></div>
               {formData.reservation.guestCount <= 1 ? (
-                <div className="py-16 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200"><p className="text-slate-500 font-medium">Reserva individual selecionada.</p></div>
+                <div className="py-16 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                  <p className="text-slate-500 font-medium">Reserva individual selecionada. Nenhum acompanhante necessário.</p>
+                </div>
               ) : (
                 <div className="space-y-6">
                   {Array.from({ length: formData.reservation.guestCount - 1 }).map((_, idx) => (
@@ -398,23 +398,8 @@ const App: React.FC = () => {
               )}
               <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 mt-8">
                 <button onClick={prevStep} className="w-full sm:flex-1 py-4 bg-slate-100 font-bold rounded-xl">Voltar</button>
-                <button onClick={processContract} disabled={loading} className="w-full sm:flex-[2] py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2">
-                  {loading ? <><i className="fas fa-circle-notch fa-spin"></i> Processando...</> : 'Gerar Contrato'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {step === FormStep.CONTRACT_PREVIEW && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-              <div className="border-b border-slate-100 pb-4"><h2 className="text-xl sm:text-2xl font-bold text-slate-800">Revisão Final</h2></div>
-              <div className="contract-preview bg-slate-50 p-6 sm:p-10 rounded-2xl border border-slate-200 h-[500px] overflow-y-auto text-slate-800 text-sm shadow-inner whitespace-pre-wrap leading-relaxed">
-                {formData.contractText}
-              </div>
-              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 mt-8">
-                <button onClick={prevStep} className="w-full sm:flex-1 py-4 bg-slate-100 font-bold rounded-xl">Corrigir Dados</button>
-                <button onClick={finalizeProcess} disabled={loading} className="w-full sm:flex-[2] py-4 bg-emerald-600 text-white font-bold rounded-xl shadow-lg">
-                  {loading ? 'Finalizando...' : 'Finalizar e Enviar para Assinatura'}
+                <button onClick={finalizeProcess} disabled={loading} className="w-full sm:flex-[2] py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95">
+                  {loading ? <><i className="fas fa-circle-notch fa-spin"></i> Enviando...</> : 'Finalizar e Enviar Cadastro'}
                 </button>
               </div>
             </div>
@@ -424,8 +409,11 @@ const App: React.FC = () => {
             <div className="text-center py-16 space-y-8 animate-in zoom-in">
               <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner"><i className="fas fa-check text-4xl"></i></div>
               <h2 className="text-3xl font-black text-slate-800">Tudo Pronto!</h2>
-              <p className="text-slate-500 max-w-sm mx-auto">Sua reserva foi concluída. Em breve você receberá o link para assinatura digital no seu e-mail.</p>
-              <button onClick={() => window.location.reload()} className="px-10 py-4 bg-slate-800 text-white font-bold rounded-xl">Novo Cadastro</button>
+              <div className="space-y-2 text-slate-500 max-w-sm mx-auto">
+                <p>Seu cadastro foi recebido com sucesso.</p>
+                <p className="font-bold text-slate-700">A nossa equipe irá gerar o seu contrato e enviá-lo para assinatura em breve.</p>
+              </div>
+              <button onClick={() => window.location.reload()} className="px-10 py-4 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-colors">Novo Cadastro</button>
             </div>
           )}
         </div>

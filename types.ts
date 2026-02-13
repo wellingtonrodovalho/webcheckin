@@ -127,6 +127,8 @@ export interface MainGuest {
   email: string;
   phone: string;
   address: string;
+  maritalStatus: string;
+  profession: string;
   documentFile?: string; // Base64
   selfieFile?: string; // Base64 for LGPD/Identity verification
 }
@@ -145,6 +147,5 @@ export enum FormStep {
   RESERVATION = 0,
   MAIN_GUEST = 1,
   COMPANIONS = 2,
-  CONTRACT_PREVIEW = 3,
-  SUCCESS = 4
+  SUCCESS = 3
 }

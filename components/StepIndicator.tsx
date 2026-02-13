@@ -10,7 +10,7 @@ const steps = [
   { id: FormStep.RESERVATION, label: 'Reserva', icon: 'fa-calendar-check' },
   { id: FormStep.MAIN_GUEST, label: 'Titular', icon: 'fa-user' },
   { id: FormStep.COMPANIONS, label: 'Hóspedes', icon: 'fa-users' },
-  { id: FormStep.CONTRACT_PREVIEW, label: 'Final', icon: 'fa-file-signature' },
+  { id: FormStep.SUCCESS, label: 'Fim', icon: 'fa-check' },
 ];
 
 const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep }) => {

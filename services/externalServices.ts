@@ -2,9 +2,9 @@
 import { FullFormData } from "../types";
 
 /**
- * URL atualizada conforme o print da nova implantação do usuário.
+ * URL atualizada conforme a nova implantação fornecida pelo usuário.
  */
-const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzhwbk_vPXQf-ZhiKylJoIPKUy6YilFfxZhb6N1DxVV9WVNS7hlhoi-Z_6K0Dd6Uylc/exec";
+const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwTwrG2ZAMrQZMec4NAkt6ChiUq9L3Oh1c-vSb1SwxKZpQCOZ-aoLfZ0xbdaVJewlUZ/exec";
 
 export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> => {
   console.log("Preparando dados detalhados para o Google Sheets...");

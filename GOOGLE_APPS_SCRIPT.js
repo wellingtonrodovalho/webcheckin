@@ -1,10 +1,22 @@
 
 /**
- * GOOGLE APPS SCRIPT - VERSÃO DEFINITIVA PARA IMAGENS
- * 1. Salva arquivos Base64 no Google Drive
- * 2. Insere apenas o LINK na planilha
- * 3. Cria automaticamente os cabeçalhos se a planilha estiver vazia
+ * GOOGLE APPS SCRIPT - VERSÃO DE DIAGNÓSTICO
+ * Instruções:
+ * 1. Selecione a função 'testePlanilha' na barra superior e clique em 'Executar'.
+ * 2. Se aparecer uma linha na sua planilha, o Script está funcionando.
+ * 3. O erro no 'doPost' ao clicar em executar é NORMAL (ele só funciona vindo do App).
  */
+
+function testePlanilha() {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheets()[0];
+    sheet.appendRow([new Date(), "TESTE MANUAL", "O script tem permissão de escrita!"]);
+    Browser.msgBox("Sucesso! Uma linha de teste foi adicionada à sua planilha.");
+  } catch (e) {
+    Browser.msgBox("Erro: " + e.toString());
+  }
+}
 
 function doPost(e) {
   var lock = LockService.getScriptLock();
@@ -13,63 +25,55 @@ function doPost(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheets()[0];
-    var contents = e.postData.contents;
+    
+    // Fallback para caso o e.postData falhe em certas condições
+    var contents = e && e.postData ? e.postData.contents : null;
+    if (!contents) {
+      return ContentService.createTextOutput("Erro: Dados não recebidos").setMimeType(ContentService.MimeType.TEXT);
+    }
+    
     var data = JSON.parse(contents);
     
-    // Pasta para salvar as fotos (será criada se não existir)
+    // Pasta para salvar as fotos
     var folderName = "Fotos_WebCheckin";
     var folders = DriveApp.getFoldersByName(folderName);
     var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
 
-    // 1. Obter cabeçalhos existentes ou criar a partir das chaves do JSON
-    var sheetHeaders = sheet.getLastColumn() > 0 ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] : [];
+    // Obter ou criar cabeçalhos
+    var lastCol = sheet.getLastColumn();
+    var headers = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
     
-    // Se a planilha estiver zerada, usa as chaves do JSON como cabeçalho
-    if (sheetHeaders.length === 0 || sheetHeaders[0] === "") {
-      sheetHeaders = Object.keys(data);
-      sheet.getRange(1, 1, 1, sheetHeaders.length).setValues([sheetHeaders]).setFontWeight("bold").setBackground("#f3f3f3");
+    if (headers.length === 0) {
+      headers = Object.keys(data);
+      sheet.appendRow(headers);
     }
 
-    // 2. Mapear os dados para a linha, tratando as imagens Base64
-    var newRow = sheetHeaders.map(function(header) {
-      var key = header.toString().trim();
-      var value = data[key] || "";
+    // Criar a nova linha baseada nos cabeçalhos existentes
+    var row = headers.map(function(h) {
+      var val = data[h] || "";
       
-      // Detecção de Base64 (Imagens)
-      if (typeof value === 'string' && value.indexOf('data:image') === 0) {
+      // Se for uma imagem Base64, salva no Drive e retorna o Link
+      if (typeof val === 'string' && val.indexOf('data:image') === 0) {
         try {
-          var splitData = value.split(',');
-          var contentType = splitData[0].split(':')[1].split(';')[0];
-          var rawBase64 = splitData[1];
-          var ext = contentType.split('/')[1] || "jpg";
-          
-          // Nome do arquivo amigável
-          var guestName = (data["Nome Titular"] || "Hospede").toString().replace(/[^a-z0-9]/gi, '_');
-          var fileName = key.replace(/[^a-z0-9]/gi, '_') + "_" + guestName + "_" + new Date().getTime() + "." + ext;
-          
-          // Decodifica e salva no Drive
-          var decoded = Utilities.base64Decode(rawBase64);
-          var blob = Utilities.newBlob(decoded, contentType, fileName);
+          var contentType = val.split(':')[1].split(';')[0];
+          var base64Data = val.split(',')[1];
+          var blob = Utilities.newBlob(Utilities.base64Decode(base64Data), contentType, h + "_" + new Date().getTime() + ".jpg");
           var file = folder.createFile(blob);
-          
-          // Define permissão de visualização para que você possa abrir o link
           file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-          
-          return file.getUrl(); // RETORNA O LINK EM VEZ DO TEXTO BASE64
-        } catch (imgErr) {
-          return "Erro Imagem: " + imgErr.toString();
+          return file.getUrl();
+        } catch (err) {
+          return "Erro Imagem";
         }
       }
-      return value;
+      return val;
     });
 
-    // 3. Adiciona a linha na planilha
-    sheet.appendRow(newRow);
+    sheet.appendRow(row);
     
-    return ContentService.createTextOutput("OK").setMimeType(ContentService.MimeType.TEXT);
+    return ContentService.createTextOutput("Sucesso").setMimeType(ContentService.MimeType.TEXT);
 
   } catch (error) {
-    return ContentService.createTextOutput("Erro no Script: " + error.toString()).setMimeType(ContentService.MimeType.TEXT);
+    return ContentService.createTextOutput("Erro: " + error.toString()).setMimeType(ContentService.MimeType.TEXT);
   } finally {
     lock.releaseLock();
   }

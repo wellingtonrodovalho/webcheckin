@@ -118,6 +118,8 @@ export interface ReservationData {
   vehiclePlate?: string;
   propertyId: string;
   totalValue: number;
+  securityDepositValue: number;
+  hasSecurityDeposit: boolean;
 }
 
 export interface MainGuest {

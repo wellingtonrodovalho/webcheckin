@@ -7,6 +7,22 @@ import { FullFormData } from "../types";
  */
 const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwTwrG2ZAMrQZMec4NAkt6ChiUq9L3Oh1c-vSb1SwxKZpQCOZ-aoLfZ0xbdaVJewlUZ/exec";
 
+// Função utilitária para formatar valores monetários em PT-BR
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', { 
+    style: 'currency', 
+    currency: 'BRL' 
+  }).format(value);
+};
+
+// Função utilitária para formatar datas no formato d.m.aaaa solicitado
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return 'N/A';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  return `${parseInt(parts[2])}.${parseInt(parts[1])}.${parts[0]}`;
+};
+
 export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> => {
   console.log("Preparando pacote de dados para a planilha...");
 
@@ -15,15 +31,17 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
     return false;
   }
 
-  // Objeto flat com nomes de chaves amigáveis que se tornarão os cabeçalhos da coluna
+  // Objeto flat com nomes de chaves amigáveis
   const payload = {
     "Data de Envio": new Date().toLocaleString('pt-BR'),
     "Imóvel": data.propertyDetails?.name || 'Não informado',
     "Proprietário": data.propertyDetails?.ownerName || 'Não informado',
-    "Check-in": data.reservation.startDate,
-    "Check-out": data.reservation.endDate,
+    "Check-in": formatDate(data.reservation.startDate),
+    "Check-out": formatDate(data.reservation.endDate),
     "Hóspedes": data.reservation.guestCount,
-    "Valor Reserva": data.reservation.totalValue,
+    "Valor Reserva": formatCurrency(data.reservation.totalValue),
+    "Caução Exigido?": data.reservation.hasSecurityDeposit ? 'Sim' : 'Não',
+    "Valor Caução": data.reservation.hasSecurityDeposit ? formatCurrency(data.reservation.securityDepositValue) : 'R$ 0,00',
     "Motivo Viagem": data.reservation.reasonForVisit,
     "Nome Titular": data.mainGuest.fullName,
     "CPF Titular": data.mainGuest.cpf,
@@ -45,7 +63,6 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
   try {
     console.log("Enviando via fetch (no-cors)...");
     
-    // O fetch no-cors não permite ler a resposta, mas o dado chega ao Google.
     await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
       method: 'POST',
       mode: 'no-cors',

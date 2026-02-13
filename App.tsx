@@ -17,7 +17,9 @@ const App: React.FC = () => {
       guestCount: 1,
       reasonForVisit: 'Turismo',
       propertyId: '3', // Default Crystal Place
-      totalValue: 0
+      totalValue: 0,
+      securityDepositValue: 0,
+      hasSecurityDeposit: false
     },
     pet: {
       hasPet: false,
@@ -57,12 +59,16 @@ const App: React.FC = () => {
   const prevStep = () => setStep(prev => prev - 1);
 
   const handleReservationChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target as HTMLInputElement;
+    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+    
     setFormData(prev => ({
       ...prev,
       reservation: {
         ...prev.reservation,
-        [name]: name === 'guestCount' || name === 'totalValue' ? parseFloat(value) || 0 : value
+        [name]: (name === 'guestCount' || name === 'totalValue' || name === 'securityDepositValue') 
+          ? parseFloat(value) || 0 
+          : val
       }
     }));
   };
@@ -129,7 +135,6 @@ const App: React.FC = () => {
     
     setLoading(true);
     try {
-      // Resolvemos todos os dados do imóvel antes de enviar para a planilha
       const propertyDetails = PROPERTIES.find(p => p.id === formData.reservation.propertyId) || PROPERTIES[0];
       const finalPayload: FullFormData = {
         ...formData,
@@ -140,7 +145,7 @@ const App: React.FC = () => {
       setStep(FormStep.SUCCESS);
     } catch (error) {
       console.error("Erro na finalização:", error);
-      alert("Erro ao finalizar processo. Os dados podem não ter sido salvos corretamente.");
+      alert("Erro ao finalizar processo. Verifique sua conexão.");
     } finally {
       setLoading(false);
     }
@@ -291,6 +296,35 @@ const App: React.FC = () => {
                   <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Valor Total (R$)</label>
                   <input type="number" name="totalValue" value={formData.reservation.totalValue || ''} onChange={handleReservationChange} placeholder="0.00" className="w-full px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl font-black text-blue-700" />
                 </div>
+              </div>
+
+              {/* Seção de Caução */}
+              <div className="p-5 sm:p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center"><i className="fas fa-shield-alt"></i></div>
+                    <h3 className="font-bold text-slate-800 uppercase text-xs sm:text-sm">Garantia de Caução</h3>
+                  </div>
+                  <label className="inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="hasSecurityDeposit" checked={formData.reservation.hasSecurityDeposit} onChange={handleReservationChange} className="sr-only peer" />
+                    <div className="relative w-11 h-6 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-emerald-600 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                    <span className="ms-3 text-xs font-bold text-slate-700">Exigir</span>
+                  </label>
+                </div>
+                
+                {formData.reservation.hasSecurityDeposit && (
+                  <div className="animate-in fade-in slide-in-from-top-2">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Valor do Caução (R$)</label>
+                    <input 
+                      type="number" 
+                      name="securityDepositValue" 
+                      value={formData.reservation.securityDepositValue || ''} 
+                      onChange={handleReservationChange} 
+                      placeholder="Valor da Garantia"
+                      className="w-full px-4 py-3 bg-white border border-emerald-200 rounded-xl font-bold text-emerald-700" 
+                    />
+                  </div>
+                )}
               </div>
 
               {selectedProperty?.petAllowed && (

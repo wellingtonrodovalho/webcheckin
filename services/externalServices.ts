@@ -1,7 +1,8 @@
 
 import { FullFormData } from "../types";
 
-const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwTwrG2ZAMrQZMec4NAkt6ChiUq9L3Oh1c-vSb1SwxKZpQCOZ-aoLfZ0xbdaVJewlUZ/exec";
+// URL atualizada conforme a imagem da implantação do usuário (Versão 8)
+const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbbyUT0TieJ_zQbOAdpT1kVfYS3arcL6qUs1WADnmF1BKWOiu3KdMn9_x_61cczGkD0O/exec";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { 
@@ -23,7 +24,7 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
     return false;
   }
 
-  // Mapeamento completo incluindo dados do proprietário para o contrato
+  // Mapeamento completo incluindo dados do proprietário (para a planilha, não para o formulário)
   const payload = {
     "Data de Envio": new Date().toLocaleString('pt-BR'),
     "Imóvel": data.propertyDetails?.name || 'N/A',
@@ -64,6 +65,7 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
       body: JSON.stringify(payload),
     });
     
+    // Como usamos no-cors, o fetch não retorna se deu certo, mas se não jogou erro, assumimos sucesso
     return true;
   } catch (error) {
     console.error("Erro ao enviar para Google Sheets:", error);

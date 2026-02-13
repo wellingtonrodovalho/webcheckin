@@ -22,7 +22,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
         let width = img.width;
         let height = img.height;
 
-        // Redimensionar se a imagem for muito grande (comum em câmeras modernas de celular)
+        // Redimensionar para manter o Base64 leve e evitar crashes no mobile
         const maxDimension = 1200;
         if (width > maxDimension || height > maxDimension) {
           if (width > height) {
@@ -39,7 +39,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          // Comprimir como JPEG 0.7 para economizar memória Base64
+          // Comprimir como JPEG 0.7
           const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
           setPreview(compressedBase64);
           onFileSelect(compressedBase64);
@@ -63,7 +63,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
       if (file.type.startsWith('image/')) {
         processImage(file);
       } else {
-        // Para PDFs ou outros, mantém o comportamento padrão (mas este app foca em fotos)
         const reader = new FileReader();
         reader.onloadend = () => {
           const base64String = reader.result as string;
@@ -83,7 +82,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
           type="file"
           id={id}
           accept="image/*"
-          capture="environment" // Sugere usar a câmera traseira no mobile
+          /* Atributo 'capture' removido para permitir escolha entre Galeria e Câmera */
           onChange={handleFileChange}
           className="hidden"
         />
@@ -101,12 +100,12 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
           ) : preview ? (
             <div className="flex items-center gap-3">
               <i className="fas fa-check-circle text-emerald-500 text-2xl"></i>
-              <span className="text-emerald-700 font-medium text-sm">Foto Selecionada</span>
+              <span className="text-emerald-700 font-medium text-sm">Documento Anexado</span>
             </div>
           ) : (
             <div className="text-center p-4">
-              <i className="fas fa-camera text-slate-400 text-3xl mb-2"></i>
-              <p className="text-slate-500 text-[10px] font-bold uppercase">Tirar Foto do Documento</p>
+              <i className="fas fa-file-upload text-slate-400 text-3xl mb-2"></i>
+              <p className="text-slate-500 text-[10px] font-bold uppercase">Anexar ou Tirar Foto do Documento</p>
             </div>
           )}
         </label>

@@ -14,25 +14,39 @@ const SelfieCapture: React.FC<SelfieCaptureProps> = ({ onCapture, label }) => {
   const [isCapturing, setIsCapturing] = useState(false);
   const [isCameraReady, setIsCameraReady] = useState(false);
 
+  // Monitoramento de prontidão da câmera (múltiplos eventos para compatibilidade mobile)
   useEffect(() => {
     if (isCapturing && stream && videoRef.current) {
-      videoRef.current.srcObject = stream;
-      
-      // Evento mais seguro que onloadedmetadata para mobile
-      videoRef.current.onplaying = () => {
-        setIsCameraReady(true);
+      const video = videoRef.current;
+      video.srcObject = stream;
+
+      const handleReady = () => {
+        if (video.videoWidth > 0) {
+          setIsCameraReady(true);
+        }
       };
 
-      videoRef.current.play().catch(err => {
-        console.error("Erro ao iniciar reprodução do vídeo:", err);
-      });
+      video.onplaying = handleReady;
+      video.oncanplay = handleReady;
+      video.onloadeddata = handleReady;
+
+      // Check de segurança periódico (caso os eventos não disparem em alguns Androids)
+      const checkInterval = setInterval(() => {
+        if (video.readyState >= 2 && video.videoWidth > 0) {
+          setIsCameraReady(true);
+          clearInterval(checkInterval);
+        }
+      }, 500);
+
+      video.play().catch(err => console.error("Erro autoplay:", err));
+
+      return () => clearInterval(checkInterval);
     }
   }, [isCapturing, stream]);
 
   const startCamera = async () => {
     try {
       setIsCameraReady(false);
-      // Resolução modesta para garantir compatibilidade e fluidez
       const constraints = {
         video: { 
           facingMode: 'user',
@@ -47,7 +61,7 @@ const SelfieCapture: React.FC<SelfieCaptureProps> = ({ onCapture, label }) => {
       setIsCapturing(true);
     } catch (err) {
       console.error("Erro ao acessar câmera:", err);
-      alert("Não foi possível abrir a câmera. Verifique se deu permissão no navegador.");
+      alert("Não foi possível abrir a câmera. Verifique as permissões de privacidade do seu navegador.");
     }
   };
 
@@ -67,51 +81,59 @@ const SelfieCapture: React.FC<SelfieCaptureProps> = ({ onCapture, label }) => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     
-    if (video && canvas && isCameraReady && video.readyState >= 2) {
+    if (!video || !canvas) return;
+
+    // Verificação de segurança para evitar capturas pretas ou crashes
+    if (video.readyState < 2 || video.videoWidth === 0) {
+      alert("Aguarde a imagem da câmera carregar completamente...");
+      return;
+    }
+
+    try {
       const context = canvas.getContext('2d', { alpha: false });
-      if (context) {
-        const vW = video.videoWidth;
-        const vH = video.videoHeight;
-        
-        // Limite rigoroso para evitar estouro de memória no Base64
-        const maxDim = 720; 
-        let tW = vW;
-        let tH = vH;
+      if (!context) return;
 
-        if (vW > maxDim || vH > maxDim) {
-          const ratio = vW / vH;
-          if (ratio > 1) {
-            tW = maxDim;
-            tH = maxDim / ratio;
-          } else {
-            tH = maxDim;
-            tW = maxDim * ratio;
-          }
+      const vW = video.videoWidth;
+      const vH = video.videoHeight;
+      
+      // Resolução segura para evitar crash de memória em Base64 no mobile
+      const maxDim = 640; 
+      let tW = vW;
+      let tH = vH;
+
+      if (vW > maxDim || vH > maxDim) {
+        const ratio = vW / vH;
+        if (ratio > 1) {
+          tW = maxDim;
+          tH = maxDim / ratio;
+        } else {
+          tH = maxDim;
+          tW = maxDim * ratio;
         }
-
-        canvas.width = tW;
-        canvas.height = tH;
-        
-        // Desenha o frame usando requestAnimationFrame para estabilidade
-        requestAnimationFrame(() => {
-          context.save();
-          context.translate(tW, 0);
-          context.scale(-1, 1);
-          context.drawImage(video, 0, 0, tW, tH);
-          context.restore();
-          
-          // COMPRESSÃO AGRESSIVA (0.5) para garantir que o smartphone não trave ao gerar a string
-          const base64 = canvas.toDataURL('image/jpeg', 0.5);
-          
-          // ORDEM CRÍTICA: Primeiro para o hardware, depois atualiza o estado
-          stopCamera(); 
-          
-          setCapturedImage(base64);
-          onCapture(base64);
-        });
       }
-    } else {
-      alert("Aguarde a imagem da câmera aparecer.");
+
+      canvas.width = tW;
+      canvas.height = tH;
+      
+      // Desenho direto (mais estável que requestAnimationFrame para este caso)
+      context.save();
+      context.translate(tW, 0);
+      context.scale(-1, 1);
+      context.drawImage(video, 0, 0, tW, tH);
+      context.restore();
+      
+      // Qualidade 0.5 para garantir que a string base64 não exceda limites de buffer do navegador
+      const base64 = canvas.toDataURL('image/jpeg', 0.5);
+      
+      setCapturedImage(base64);
+      onCapture(base64);
+      
+      // Aguarda um instante antes de desligar o hardware para garantir o processamento
+      setTimeout(stopCamera, 200);
+      
+    } catch (err) {
+      console.error("Erro na captura:", err);
+      alert("Erro ao processar a foto. Tente novamente.");
     }
   };
 
@@ -122,9 +144,7 @@ const SelfieCapture: React.FC<SelfieCaptureProps> = ({ onCapture, label }) => {
 
   useEffect(() => {
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(t => t.stop());
-      }
+      if (stream) stream.getTracks().forEach(t => t.stop());
     };
   }, [stream]);
 
@@ -149,14 +169,14 @@ const SelfieCapture: React.FC<SelfieCaptureProps> = ({ onCapture, label }) => {
             <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700">
               <i className="fas fa-camera text-slate-600 text-2xl"></i>
             </div>
-            <p className="text-slate-500 text-[10px] font-bold uppercase">Câmera pronta</p>
+            <p className="text-slate-500 text-[10px] font-bold uppercase">Toque abaixo para iniciar</p>
           </div>
         )}
         
-        {/* Indicador de carregamento da câmera */}
         {isCapturing && !isCameraReady && (
-          <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center">
-            <i className="fas fa-circle-notch fa-spin text-white text-2xl"></i>
+          <div className="absolute inset-0 bg-slate-900/60 flex flex-col items-center justify-center text-white">
+            <i className="fas fa-circle-notch fa-spin text-3xl mb-2"></i>
+            <span className="text-[10px] font-bold uppercase tracking-widest">Iniciando...</span>
           </div>
         )}
 
@@ -168,21 +188,23 @@ const SelfieCapture: React.FC<SelfieCaptureProps> = ({ onCapture, label }) => {
           <button 
             type="button"
             onClick={startCamera} 
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all"
+            className="px-8 py-4 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all"
           >
             <i className="fas fa-camera mr-2"></i> Abrir Câmera
           </button>
         )}
         
         {isCapturing && (
-          <button 
-            type="button"
-            onClick={capturePhoto}
-            disabled={!isCameraReady}
-            className={`w-16 h-16 rounded-full border-4 flex items-center justify-center shadow-2xl transition-all ${isCameraReady ? 'border-blue-600 bg-white scale-110' : 'border-slate-400 bg-slate-200 opacity-50'}`}
-          >
-            <div className={`w-12 h-12 rounded-full ${isCameraReady ? 'bg-blue-600 shadow-inner' : 'bg-slate-400'}`}></div>
-          </button>
+          <div className="flex flex-col items-center gap-2">
+            <button 
+              type="button"
+              onClick={capturePhoto}
+              className={`w-20 h-20 rounded-full border-4 flex items-center justify-center shadow-2xl transition-all active:scale-90 ${isCameraReady ? 'border-blue-600 bg-white' : 'border-slate-500 bg-slate-300 opacity-70'}`}
+            >
+              <div className={`w-14 h-14 rounded-full ${isCameraReady ? 'bg-blue-600 shadow-lg' : 'bg-slate-500'}`}></div>
+            </button>
+            <span className="text-[10px] font-black text-blue-600 uppercase">Toque para tirar a foto</span>
+          </div>
         )}
         
         {capturedImage && (

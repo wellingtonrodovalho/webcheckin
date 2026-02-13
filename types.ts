@@ -138,6 +138,7 @@ export interface FullFormData {
   pet: PetData;
   mainGuest: MainGuest;
   companions: Companion[];
+  propertyDetails?: Property; // Novo campo para envio completo de dados
   contractText?: string;
   lgpdConsent: boolean;
 }

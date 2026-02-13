@@ -129,7 +129,14 @@ const App: React.FC = () => {
     
     setLoading(true);
     try {
-      await saveToGoogleSheets(formData);
+      // Resolvemos todos os dados do imóvel antes de enviar para a planilha
+      const propertyDetails = PROPERTIES.find(p => p.id === formData.reservation.propertyId) || PROPERTIES[0];
+      const finalPayload: FullFormData = {
+        ...formData,
+        propertyDetails: propertyDetails
+      };
+      
+      await saveToGoogleSheets(finalPayload);
       setStep(FormStep.SUCCESS);
     } catch (error) {
       console.error("Erro na finalização:", error);

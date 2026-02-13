@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FormStep, FullFormData, PROPERTIES } from './types';
 import { generateContract } from './services/geminiService';
 import { saveToGoogleSheets, sendToAutentique } from './services/externalServices';
@@ -44,6 +44,18 @@ const App: React.FC = () => {
     companions: [],
     lgpdConsent: false
   });
+
+  const selectedProperty = PROPERTIES.find(p => p.id === formData.reservation.propertyId) || PROPERTIES[0];
+
+  // Garante que o número de hóspedes não ultrapasse a capacidade ao trocar de imóvel
+  useEffect(() => {
+    if (formData.reservation.guestCount > selectedProperty.capacity) {
+      setFormData(prev => ({
+        ...prev,
+        reservation: { ...prev.reservation, guestCount: selectedProperty.capacity }
+      }));
+    }
+  }, [formData.reservation.propertyId]);
 
   const nextStep = () => setStep(prev => prev + 1);
   const prevStep = () => setStep(prev => prev - 1);
@@ -151,8 +163,6 @@ const App: React.FC = () => {
       setLoading(false);
     }
   };
-
-  const selectedProperty = PROPERTIES.find(p => p.id === formData.reservation.propertyId);
 
   return (
     <div className="min-h-screen pb-12 bg-slate-50 flex flex-col font-['Nunito']">
@@ -270,7 +280,7 @@ const App: React.FC = () => {
                   className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none text-sm sm:text-base font-bold text-blue-900"
                 >
                   {PROPERTIES.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
+                    <option key={p.id} value={p.id}>{p.name} ({p.capacity} pess.)</option>
                   ))}
                 </select>
                 {selectedProperty?.petAllowed ? (
@@ -305,15 +315,15 @@ const App: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Hóspedes</label>
+                  <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Total de Hóspedes (Máx {selectedProperty.capacity})</label>
                   <select
                     name="guestCount"
                     value={formData.reservation.guestCount}
                     onChange={handleReservationChange}
                     className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base"
                   >
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
-                      <option key={n} value={n}>{n} {n === 1 ? 'Pessoa' : 'Pessoas'}</option>
+                    {Array.from({ length: selectedProperty.capacity }).map((_, i) => (
+                      <option key={i + 1} value={i + 1}>{i + 1} {i === 0 ? 'Pessoa' : 'Pessoas'}</option>
                     ))}
                   </select>
                 </div>

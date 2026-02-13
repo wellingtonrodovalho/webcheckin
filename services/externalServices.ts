@@ -2,85 +2,67 @@
 import { FullFormData } from "../types";
 
 /**
- * URL atualizada conforme a nova implantação fornecida pelo usuário.
+ * URL final fornecida pelo usuário terminando em "...UZ/exec"
  */
 const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwTwrG2ZAMrQZMec4NAkt6ChiUq9L3Oh1c-vSb1SwxKZpQCOZ-aoLfZ0xbdaVJewlUZ/exec";
 
 export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> => {
-  console.log("Preparando dados detalhados para o Google Sheets...");
+  console.log("Iniciando envio para Google Sheets...");
 
   if (!GOOGLE_SHEETS_WEBAPP_URL) {
-    console.error("URL do Google Sheets não configurada.");
+    console.error("Configuração ausente: GOOGLE_SHEETS_WEBAPP_URL");
     return false;
   }
 
-  // Organizamos os dados de forma linear (flat) para que o Apps Script da planilha
-  // possa simplesmente iterar sobre as chaves e criar colunas perfeitas.
+  // Mapeamento linear dos campos para colunas da planilha
   const flattenedData = {
     "Data de Envio": new Date().toLocaleString('pt-BR'),
-    
-    // DADOS DO IMÓVEL E PROPRIETÁRIO
-    "Imóvel: Nome": data.propertyDetails?.name || '',
-    "Imóvel: Endereço": data.propertyDetails?.address || '',
-    "Proprietário: Nome": data.propertyDetails?.ownerName || '',
-    "Proprietário: CPF": data.propertyDetails?.ownerCpf || '',
-    "Proprietário: Est. Civil": data.propertyDetails?.ownerStatus || '',
-    "Proprietário: Profissão": data.propertyDetails?.ownerProfession || '',
-    
-    // DADOS DA RESERVA
-    "Reserva: Início": data.reservation.startDate,
-    "Reserva: Fim": data.reservation.endDate,
-    "Reserva: Qtd Hóspedes": data.reservation.guestCount,
-    "Reserva: Valor Total": data.reservation.totalValue,
-    "Reserva: Motivo": data.reservation.reasonForVisit,
-    
-    // DADOS DO TITULAR
-    "Titular: Nome Completo": data.mainGuest.fullName,
+    "Imóvel": data.propertyDetails?.name || 'N/A',
+    "Proprietário": data.propertyDetails?.ownerName || 'N/A',
+    "Check-in": data.reservation.startDate,
+    "Check-out": data.reservation.endDate,
+    "Hóspedes": data.reservation.guestCount,
+    "Valor Total": data.reservation.totalValue,
+    "Motivo": data.reservation.reasonForVisit,
+    "Titular: Nome": data.mainGuest.fullName,
     "Titular: CPF": data.mainGuest.cpf,
     "Titular: RG": data.mainGuest.rg,
     "Titular: E-mail": data.mainGuest.email,
     "Titular: WhatsApp": data.mainGuest.phone,
-    "Titular: Endereço Residencial": data.mainGuest.address,
-    "Titular: Estado Civil": data.mainGuest.maritalStatus,
+    "Titular: Endereço": data.mainGuest.address,
+    "Titular: Est. Civil": data.mainGuest.maritalStatus,
     "Titular: Profissão": data.mainGuest.profession,
-    
-    // DADOS DO PET
-    "Tem Pet?": data.pet.hasPet ? 'Sim' : 'Não',
-    "Pet: Detalhes": data.pet.hasPet 
-      ? `Nome: ${data.pet.name} | Espécie: ${data.pet.species} | Raça: ${data.pet.breed} | Peso: ${data.pet.weight} | Idade: ${data.pet.age} | Porte: ${data.pet.size}`
-      : 'N/A',
-    
-    // ACOMPANHANTES
+    "Pet: Possui?": data.pet.hasPet ? 'Sim' : 'Não',
+    "Pet: Detalhes": data.pet.hasPet ? `${data.pet.name} (${data.pet.breed}/${data.pet.size})` : '-',
     "Acompanhantes": data.companions.length > 0 
-      ? data.companions.map((c, i) => `${i+1}. ${c.name} (Doc: ${c.documentNumber})`).join(' || ')
-      : 'Apenas o titular',
-      
-    // STATUS DOS ARQUIVOS (Confirmando que foram coletados)
-    "Arquivo: Doc Titular": data.mainGuest.documentFile ? 'COLETADO' : 'PENDENTE',
-    "Arquivo: Selfie Titular": data.mainGuest.selfieFile ? 'COLETADO' : 'PENDENTE',
-    "Arquivo: Vacina Pet": data.pet.vaccineFile ? 'COLETADO' : 'N/A'
+      ? data.companions.map(c => `${c.name} (${c.documentNumber})`).join('; ')
+      : 'Nenhum',
+    "Doc. Titular": data.mainGuest.documentFile ? 'SIM' : 'NÃO',
+    "Selfie": data.mainGuest.selfieFile ? 'SIM' : 'NÃO'
   };
 
   try {
-    // Envio via POST para o Apps Script
+    // Usamos mode: 'no-cors' para evitar bloqueios de segurança do navegador ao postar para domínios do Google
+    // O Google Apps Script processará o body como um POST simples.
     await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
       method: 'POST',
-      mode: 'no-cors', 
+      mode: 'no-cors',
       headers: {
-        'Content-Type': 'text/plain',
+        'Content-Type': 'text/plain', // Essencial para evitar preflight OPTIONS
       },
       body: JSON.stringify(flattenedData),
     });
 
+    console.log("Comando de envio enviado com sucesso.");
     return true;
   } catch (error) {
-    console.error("Erro técnico no envio para Google Sheets:", error);
-    throw new Error("Erro de conexão ao salvar na planilha.");
+    console.error("Erro crítico no envio:", error);
+    throw error;
   }
 };
 
 export const sendToAutentique = async (pdfBase64: string, guestEmail: string, guestName: string): Promise<string> => {
-  console.log(`Simulando integração Autentique para: ${guestName}`);
+  console.log(`Simulando assinatura Autentique para: ${guestName}`);
   await new Promise(resolve => setTimeout(resolve, 1500));
-  return "sign_request_" + Math.random().toString(36).substring(7);
+  return "sign_" + Math.random().toString(36).substring(7);
 };

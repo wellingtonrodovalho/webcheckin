@@ -1,53 +1,54 @@
 
 /**
- * GOOGLE APPS SCRIPT PARA RECEBIMENTO DE CADASTRO DE HÓSPEDES
+ * GOOGLE APPS SCRIPT - VERSÃO ULTRA ROBUSTA
  * 
- * Como usar:
- * 1. Na sua Planilha Google, vá em Extensões > Apps Script.
- * 2. Cole este código e salve.
- * 3. Clique em "Implantar" > "Nova implantação".
- * 4. Escolha "App da Web", coloque "Qualquer pessoa" em quem pode acessar.
- * 5. Copie a URL gerada e certifique-se que é a mesma no arquivo services/externalServices.ts.
+ * Instruções:
+ * 1. Substitua todo o código anterior por este.
+ * 2. Clique em Salvar (disquete).
+ * 3. Clique em Implantar > Gerenciar Implantações.
+ * 4. Edite a implantação atual, escolha "Nova Versão" e clique em Implantar.
  */
 
 function doPost(e) {
+  var lock = LockService.getScriptLock();
+  lock.tryLock(10000); // Espera até 10 segundos para evitar conflitos de escrita simultânea
+
   try {
-    // Recebe o JSON enviado pelo formulário
-    var data = JSON.parse(e.postData.contents);
-    
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getActiveSheet();
     
-    // Se a planilha estiver vazia, cria a linha de cabeçalho baseada nas chaves do objeto
-    if (sheet.getLastRow() === 0) {
-      var headers = Object.keys(data);
+    // Tenta ler os dados enviados
+    var contents = e.postData.contents;
+    var data = JSON.parse(contents);
+    
+    // Obtém os cabeçalhos atuais ou cria se estiver vazio
+    var lastCol = sheet.getLastColumn();
+    var headers = [];
+    
+    if (lastCol > 0) {
+      headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    } else {
+      // Se a planilha estiver totalmente limpa, usa as chaves do JSON como cabeçalho
+      headers = Object.keys(data);
       sheet.appendRow(headers);
-      
-      // Estiliza o cabeçalho (Negrito e cor de fundo)
-      var headerRange = sheet.getRange(1, 1, 1, headers.length);
-      headerRange.setFontWeight("bold");
-      headerRange.setBackground("#f3f4f6");
-      headerRange.setBorder(true, true, true, true, true, true);
+      // Formatação básica para o cabeçalho
+      sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#E2E8F0");
     }
-    
-    // Mapeia os valores do objeto para um array seguindo a ordem das colunas
-    // (Garante que se você mudar a ordem no futuro, o script se adapta)
-    var currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    var row = currentHeaders.map(function(header) {
-      return data[header] !== undefined ? data[header] : "";
+
+    // Prepara a nova linha baseada nos cabeçalhos existentes
+    var newRow = headers.map(function(h) {
+      return data[h] !== undefined ? data[h] : "";
     });
+
+    // Adiciona a linha de dados
+    sheet.appendRow(newRow);
     
-    // Adiciona os dados na planilha
-    sheet.appendRow(row);
+    return ContentService.createTextOutput("Sucesso").setMimeType(ContentService.MimeType.TEXT);
     
-    // Retorna uma resposta de sucesso para o navegador (mesmo que em no-cors o navegador ignore)
-    return ContentService.createTextOutput("Dados recebidos com sucesso!")
-                         .setMimeType(ContentService.MimeType.TEXT);
-                         
-  } catch (error) {
-    // Em caso de erro, registra no log do Apps Script
-    console.error("Erro no processamento do doPost: " + error.message);
-    return ContentService.createTextOutput("Erro: " + error.message)
-                         .setMimeType(ContentService.MimeType.TEXT);
+  } catch (f) {
+    console.error("Erro no script: " + f.toString());
+    return ContentService.createTextOutput("Erro: " + f.toString()).setMimeType(ContentService.MimeType.TEXT);
+  } finally {
+    lock.releaseLock();
   }
 }

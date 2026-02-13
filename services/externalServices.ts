@@ -21,10 +21,14 @@ const formatDate = (dateStr: string) => {
 export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> => {
   if (!GOOGLE_SHEETS_WEBAPP_URL) return false;
 
-  // Payload completo incluindo os binários em base64 que o Apps Script agora converte em links
+  // Payload completo incluindo dados detalhados do proprietário e arquivos base64
   const payload = {
     "Data de Envio": new Date().toLocaleString('pt-BR'),
     "Imóvel": data.propertyDetails?.name || 'N/A',
+    "Proprietário Nome": data.propertyDetails?.ownerName || 'N/A',
+    "Proprietário CPF": data.propertyDetails?.ownerCpf || 'N/A',
+    "Proprietário Estado Civil": data.propertyDetails?.ownerStatus || 'N/A',
+    "Proprietário Profissão": data.propertyDetails?.ownerProfession || 'N/A',
     "Check-in": formatDate(data.reservation.startDate),
     "Check-out": formatDate(data.reservation.endDate),
     "Hóspedes": data.reservation.guestCount,

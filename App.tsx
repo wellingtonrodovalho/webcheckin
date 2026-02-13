@@ -46,6 +46,11 @@ const App: React.FC = () => {
 
   const selectedProperty = PROPERTIES.find(p => p.id === formData.reservation.propertyId) || PROPERTIES[0];
 
+  // Efeito para rolar para o topo sempre que mudar de passo
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
+
   const formatBRL = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
   };
@@ -160,7 +165,7 @@ const App: React.FC = () => {
           )}
 
           {step === FormStep.RESERVATION && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
               <h2 className="text-xl font-bold text-slate-800 border-b pb-2">Informações da Reserva</h2>
               
               <div className="space-y-4">
@@ -176,6 +181,20 @@ const App: React.FC = () => {
                     <select name="guestCount" value={formData.reservation.guestCount} onChange={handleReservationChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold">
                       {Array.from({ length: selectedProperty.capacity }).map((_, i) => <option key={i+1} value={i+1}>{i+1} Hóspede(s)</option>)}
                     </select>
+                  </div>
+                </div>
+
+                {/* Exibição Completa dos Dados do Proprietário */}
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <i className="fas fa-user-tie text-blue-600"></i>
+                    <h3 className="text-xs font-black text-slate-600 uppercase">Dados do Proprietário</h3>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-sm">
+                    <div><span className="text-[10px] text-slate-400 font-bold uppercase block">Nome Completo</span><span className="font-bold text-slate-700">{selectedProperty.ownerName}</span></div>
+                    <div><span className="text-[10px] text-slate-400 font-bold uppercase block">CPF</span><span className="font-bold text-slate-700">{selectedProperty.ownerCpf}</span></div>
+                    <div><span className="text-[10px] text-slate-400 font-bold uppercase block">Estado Civil</span><span className="font-bold text-slate-700">{selectedProperty.ownerStatus}</span></div>
+                    <div><span className="text-[10px] text-slate-400 font-bold uppercase block">Profissão</span><span className="font-bold text-slate-700">{selectedProperty.ownerProfession}</span></div>
                   </div>
                 </div>
 
@@ -221,7 +240,7 @@ const App: React.FC = () => {
           )}
 
           {step === FormStep.MAIN_GUEST && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
               <h2 className="text-xl font-bold text-slate-800 border-b pb-2">Identificação do Titular</h2>
               <div className="grid gap-4">
                 <input name="fullName" value={formData.mainGuest.fullName} onChange={handleMainGuestChange} placeholder="Nome Completo" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
@@ -246,7 +265,7 @@ const App: React.FC = () => {
           )}
 
           {step === FormStep.COMPANIONS && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
               <h2 className="text-xl font-bold text-slate-800 border-b pb-2">Hóspedes Acompanhantes</h2>
               {formData.reservation.guestCount > 1 ? (
                 <div className="space-y-4">
@@ -273,7 +292,7 @@ const App: React.FC = () => {
           )}
 
           {step === FormStep.SUCCESS && (
-            <div className="text-center py-12 space-y-6">
+            <div className="text-center py-12 space-y-6 animate-in zoom-in">
               <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl"><i className="fas fa-check"></i></div>
               <h2 className="text-3xl font-black text-slate-800 tracking-tight">Sucesso!</h2>
               <div className="text-slate-500 space-y-2">

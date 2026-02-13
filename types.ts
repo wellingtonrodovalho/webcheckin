@@ -1,4 +1,99 @@
 
+export interface Property {
+  id: string;
+  name: string;
+  address: string;
+  ownerName: string;
+  ownerCpf: string;
+  ownerStatus: string;
+  ownerProfession: string;
+  petAllowed: boolean;
+}
+
+export const PROPERTIES: Property[] = [
+  {
+    id: "1",
+    name: "Resort do LAGO - Caldas Novas (207 C)",
+    address: "Av. Caminho do Lago, Gleba 10D, Unidade 207 C, Caldas Novas-GO, 75.680-001",
+    ownerName: "Rosiani Ipolita Leão",
+    ownerCpf: "995.383.856-91",
+    ownerStatus: "Solteira",
+    ownerProfession: "Pecuarista",
+    petAllowed: false
+  },
+  {
+    id: "2",
+    name: "Resort do LAGO - Caldas Novas (408 D)",
+    address: "Av. Caminho do Lago, Gleba 10D, Unidade 408 D, Caldas Novas-GO, 75.680-001",
+    ownerName: "Rosiani Ipolita Leão",
+    ownerCpf: "995.383.856-91",
+    ownerStatus: "Solteira",
+    ownerProfession: "Pecuarista",
+    petAllowed: false
+  },
+  {
+    id: "3",
+    name: "Flat no Crystal Place (1609)",
+    address: "Avenida Edmundo P. de Abreu, 31, Apartamento 1609, Setor Pedro Ludovico, Goiânia-GO, 74823-030",
+    ownerName: "Wellington Rodovalho Fonseca",
+    ownerCpf: "269.462.701-34",
+    ownerStatus: "Casado",
+    ownerProfession: "Corretor de Imóveis",
+    petAllowed: true
+  },
+  {
+    id: "4",
+    name: "Casa da vovó",
+    address: "Rua Santa Gertrudes, 26, Setor Coimbra, Goiânia-GO, 74535-420",
+    ownerName: "Cristiane Argenta Camelo",
+    ownerCpf: "592.216.581-04",
+    ownerStatus: "União estável",
+    ownerProfession: "Administradora",
+    petAllowed: true
+  },
+  {
+    id: "5",
+    name: "Studio A no Bueno (101A)",
+    address: "Rua T-45, 61, Ap 101A, Setor Bueno, Goiânia-GO, 74210-160",
+    ownerName: "Rosiani Ipolita Leão",
+    ownerCpf: "995.383.856-91",
+    ownerStatus: "Solteira",
+    ownerProfession: "Pecuarista",
+    petAllowed: false
+  },
+  {
+    id: "6",
+    name: "Studio B no Bueno (101B)",
+    address: "Rua T-45, 61, Ap 101B, Setor Bueno, Goiânia-GO, 74210-160",
+    ownerName: "Rosiani Ipolita Leão",
+    ownerCpf: "995.383.856-91",
+    ownerStatus: "Solteira",
+    ownerProfession: "Pecuarista",
+    petAllowed: false
+  },
+  {
+    id: "7",
+    name: "Apto 2 suítes no Bueno (410 C)",
+    address: "Rua T-47, 173, Ap 410, Bloco C, Setor Bueno, Goiânia-GO, 74210-180",
+    ownerName: "Wellington Rodovalho Fonseca",
+    ownerCpf: "269.462.701-34",
+    ownerStatus: "Casado",
+    ownerProfession: "Corretor de Imóveis",
+    petAllowed: false
+  }
+];
+
+export interface PetData {
+  hasPet: boolean;
+  name?: string;
+  breed?: string;
+  weight?: string;
+  age?: string;
+  species?: string;
+  size?: string;
+  vaccineFile?: string; // Base64
+}
+
 export interface Companion {
   id: string;
   name: string;
@@ -13,8 +108,8 @@ export interface ReservationData {
   reasonForVisit: string;
   vehicleModel?: string;
   vehiclePlate?: string;
-  propertyAddress: string;
-  dailyRate: number;
+  propertyId: string;
+  totalValue: number;
 }
 
 export interface MainGuest {
@@ -30,6 +125,7 @@ export interface MainGuest {
 
 export interface FullFormData {
   reservation: ReservationData;
+  pet: PetData;
   mainGuest: MainGuest;
   companions: Companion[];
   contractText?: string;

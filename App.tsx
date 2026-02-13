@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { FormStep, FullFormData } from './types';
+import { FormStep, FullFormData, PROPERTIES } from './types';
 import { generateContract } from './services/geminiService';
 import { saveToGoogleSheets, sendToAutentique } from './services/externalServices';
 import StepIndicator from './components/StepIndicator';
@@ -21,8 +21,17 @@ const App: React.FC = () => {
       endDate: '',
       guestCount: 1,
       reasonForVisit: 'Turismo',
-      propertyAddress: 'Rua 4, Edifício Crystal, Setor Oeste, Goiânia - GO',
-      dailyRate: 250
+      propertyId: '3', // Default Crystal Place
+      totalValue: 0
+    },
+    pet: {
+      hasPet: false,
+      name: '',
+      breed: '',
+      weight: '',
+      age: '',
+      species: 'Canino',
+      size: 'Pequeno'
     },
     mainGuest: {
       fullName: '',
@@ -45,7 +54,19 @@ const App: React.FC = () => {
       ...prev,
       reservation: {
         ...prev.reservation,
-        [name]: name === 'guestCount' ? parseInt(value) : value
+        [name]: name === 'guestCount' || name === 'totalValue' ? parseFloat(value) || 0 : value
+      }
+    }));
+  };
+
+  const handlePetChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target as HTMLInputElement;
+    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+    setFormData(prev => ({
+      ...prev,
+      pet: {
+        ...prev.pet,
+        [name]: val
       }
     }));
   };
@@ -67,11 +88,16 @@ const App: React.FC = () => {
     setFormData(prev => ({ ...prev, companions: newCompanions }));
   };
 
-  const handleDocumentUpload = (role: 'main' | 'companion', index?: number) => (base64: string) => {
+  const handleDocumentUpload = (role: 'main' | 'companion' | 'pet', index?: number) => (base64: string) => {
     if (role === 'main') {
       setFormData(prev => ({
         ...prev,
         mainGuest: { ...prev.mainGuest, documentFile: base64 }
+      }));
+    } else if (role === 'pet') {
+      setFormData(prev => ({
+        ...prev,
+        pet: { ...prev.pet, vaccineFile: base64 }
       }));
     } else if (index !== undefined) {
       const newCompanions = [...formData.companions];
@@ -88,6 +114,14 @@ const App: React.FC = () => {
   };
 
   const processContract = async () => {
+    if (formData.reservation.totalValue <= 0) {
+      alert("Por favor, informe o valor total da reserva.");
+      return;
+    }
+    if (formData.pet.hasPet && !formData.pet.vaccineFile) {
+      alert("Por favor, carregue o comprovante de vacinação do pet.");
+      return;
+    }
     setLoading(true);
     try {
       const text = await generateContract(formData);
@@ -95,7 +129,7 @@ const App: React.FC = () => {
       nextStep();
     } catch (error) {
       console.error("Falha ao processar contrato:", error);
-      alert("Houve um erro ao gerar o contrato. Verifique sua conexão ou tente novamente em instantes.");
+      alert("Houve um erro ao gerar o contrato. Verifique sua conexão ou tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -104,27 +138,25 @@ const App: React.FC = () => {
   const finalizeProcess = async () => {
     setLoading(true);
     try {
-      // 1. Salva os dados na planilha
       await saveToGoogleSheets(formData);
-      
-      // 2. Tenta enviar para assinatura (se houver contrato)
       if (formData.contractText) {
         const pdfBase64 = simulatePdfGeneration(formData.contractText);
         await sendToAutentique(pdfBase64, formData.mainGuest.email, formData.mainGuest.fullName);
       }
-      
       setStep(FormStep.SUCCESS);
     } catch (error) {
       console.error("Erro na finalização:", error);
-      alert("Erro ao finalizar processo. Os dados podem não ter sido salvos na planilha.");
+      alert("Erro ao finalizar processo. Os dados podem não ter sido salvos corretamente.");
     } finally {
       setLoading(false);
     }
   };
 
+  const selectedProperty = PROPERTIES.find(p => p.id === formData.reservation.propertyId);
+
   return (
-    <div className="min-h-screen pb-12 bg-slate-50 flex flex-col">
-      {/* Responsive Header Section */}
+    <div className="min-h-screen pb-12 bg-slate-50 flex flex-col font-['Nunito']">
+      {/* Header */}
       <header className="bg-white border-b sticky top-0 z-50 shadow-sm transition-all duration-300">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -159,16 +191,6 @@ const App: React.FC = () => {
               </div>
             </div>
           </div>
-          
-          <div className="mt-3 pt-3 border-t border-slate-50 hidden sm:flex flex-col md:flex-row md:items-center justify-between gap-2">
-            <p className="text-[9px] text-slate-400 leading-tight italic">
-              CNAE: 6821-8/02 - Corretagem no aluguel de imóveis
-            </p>
-            <p className="text-[10px] text-slate-500 leading-tight">
-              <i className="fas fa-map-marker-alt mr-1.5 text-blue-400"></i>
-              Rua 1, Qd. 9, Lt. 22, Casa 2, Jd. Santo Antônio, Goiânia-GO, CEP 74.853-130
-            </p>
-          </div>
         </div>
       </header>
 
@@ -200,12 +222,7 @@ const App: React.FC = () => {
                   <i className="fas fa-info-circle text-blue-500"></i> Segurança e Transparência
                 </h3>
                 <div className="text-[11px] sm:text-sm text-slate-600 space-y-3 leading-relaxed">
-                  <p className="font-medium text-slate-800">Este formulário é multiuso:</p>
-                  <p>Os dados coletados são essenciais para o seu cadastro de hóspede e para a eventual elaboração do contrato de locação por temporada, garantindo agilidade e segurança jurídica.</p>
-                  <div className="grid sm:grid-cols-2 gap-4 pt-2">
-                    <p>1. <strong>Finalidade:</strong> Cadastro de segurança e elaboração de contrato (Lei 8.245/91).</p>
-                    <p>2. <strong>Controlador:</strong> Wellington R. Fonseca, responsável técnico.</p>
-                  </div>
+                  <p>Os dados coletados são essenciais para o seu cadastro de hóspede e para a elaboração do contrato de locação por temporada.</p>
                 </div>
               </div>
 
@@ -221,7 +238,7 @@ const App: React.FC = () => {
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-bold text-blue-900">Concordo com o Tratamento de Dados</p>
-                    <p className="text-[10px] sm:text-[11px] text-blue-700 mt-1">Autorizo o uso dos meus dados para fins de reserva, cadastro e eventual contrato.</p>
+                    <p className="text-[10px] sm:text-[11px] text-blue-700 mt-1">Autorizo o uso dos meus dados para fins de reserva e contrato.</p>
                   </div>
                 </label>
 
@@ -241,7 +258,26 @@ const App: React.FC = () => {
             <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-4">
               <div className="border-b border-slate-100 pb-4">
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Detalhes da Estadia</h2>
-                <p className="text-slate-500 text-xs sm:text-sm mt-1">Dados da reserva para o imóvel em Goiânia.</p>
+                <p className="text-slate-500 text-xs sm:text-sm mt-1">Dados da reserva e imóvel selecionado.</p>
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Imóvel da Reserva</label>
+                <select
+                  name="propertyId"
+                  value={formData.reservation.propertyId}
+                  onChange={handleReservationChange}
+                  className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none text-sm sm:text-base font-bold text-blue-900"
+                >
+                  {PROPERTIES.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+                {selectedProperty?.petAllowed ? (
+                  <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider"><i className="fas fa-paw mr-1"></i> Este imóvel PERMITE pets</p>
+                ) : (
+                  <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider"><i className="fas fa-ban mr-1"></i> Este imóvel NÃO permite pets</p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
@@ -252,7 +288,7 @@ const App: React.FC = () => {
                     name="startDate"
                     value={formData.reservation.startDate}
                     onChange={handleReservationChange}
-                    className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm sm:text-base"
+                    className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base"
                   />
                 </div>
                 <div className="space-y-2">
@@ -262,7 +298,7 @@ const App: React.FC = () => {
                     name="endDate"
                     value={formData.reservation.endDate}
                     onChange={handleReservationChange}
-                    className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm sm:text-base"
+                    className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base"
                   />
                 </div>
               </div>
@@ -274,7 +310,7 @@ const App: React.FC = () => {
                     name="guestCount"
                     value={formData.reservation.guestCount}
                     onChange={handleReservationChange}
-                    className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none text-sm sm:text-base"
+                    className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base"
                   >
                     {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
                       <option key={n} value={n}>{n} {n === 1 ? 'Pessoa' : 'Pessoas'}</option>
@@ -282,48 +318,131 @@ const App: React.FC = () => {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Motivo da Vinda</label>
-                  <select
-                    name="reasonForVisit"
-                    value={formData.reservation.reasonForVisit}
+                  <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Valor Total da Reserva (R$)</label>
+                  <input
+                    type="number"
+                    name="totalValue"
+                    value={formData.reservation.totalValue || ''}
                     onChange={handleReservationChange}
-                    className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none text-sm sm:text-base"
-                  >
-                    <option value="Turismo">Turismo</option>
-                    <option value="Trabalho">Trabalho / Evento</option>
-                    <option value="Saúde">Saúde (Clínicas/Hospitais)</option>
-                    <option value="Outros">Outros</option>
-                  </select>
+                    placeholder="0.00"
+                    className="w-full px-4 py-3 sm:py-4 bg-blue-50 border border-blue-200 rounded-xl text-sm sm:text-base font-black text-blue-700"
+                  />
                 </div>
               </div>
 
-              <div className="bg-blue-50/50 p-4 sm:p-6 rounded-2xl border border-blue-100 flex flex-col sm:flex-row gap-4">
-                <div className="text-blue-500 text-2xl"><i className="fas fa-car"></i></div>
-                <div className="flex-1 space-y-4">
-                  <p className="text-sm font-bold text-blue-900">Veículo para Acesso ao Estacionamento (Opcional)</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <input
-                      placeholder="Modelo (Ex: HB20)"
-                      name="vehicleModel"
-                      value={formData.reservation.vehicleModel}
-                      onChange={handleReservationChange}
-                      className="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl text-sm"
-                    />
-                    <input
-                      placeholder="Placa"
-                      name="vehiclePlate"
-                      value={formData.reservation.vehiclePlate}
-                      onChange={handleReservationChange}
-                      className="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl text-sm uppercase"
-                    />
+              {/* PET SECTION */}
+              {selectedProperty?.petAllowed && (
+                <div className="p-5 sm:p-8 bg-blue-50/30 border border-blue-100 rounded-[2rem] space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+                        <i className="fas fa-paw"></i>
+                      </div>
+                      <h3 className="font-black text-blue-900 uppercase tracking-tight text-sm sm:text-base">Informações do Pet</h3>
+                    </div>
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        name="hasPet"
+                        checked={formData.pet.hasPet}
+                        onChange={handlePetChange}
+                        className="sr-only peer" 
+                      />
+                      <div className="relative w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <span className="ms-3 text-sm font-bold text-blue-900">Trarei Pet</span>
+                    </label>
                   </div>
+
+                  {formData.pet.hasPet && (
+                    <div className="grid gap-5 animate-in fade-in slide-in-from-top-4 duration-500">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Nome do Pet</label>
+                          <input 
+                            name="name"
+                            value={formData.pet.name}
+                            onChange={handlePetChange}
+                            className="w-full px-4 py-3 bg-white border border-blue-100 rounded-xl text-sm font-bold text-slate-700" 
+                            placeholder="Ex: Meg e Sol"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Raça</label>
+                          <input 
+                            name="breed"
+                            value={formData.pet.breed}
+                            onChange={handlePetChange}
+                            className="w-full px-4 py-3 bg-white border border-blue-100 rounded-xl text-sm font-bold text-slate-700" 
+                            placeholder="Ex: Pinscher"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Espécie</label>
+                          <select 
+                            name="species"
+                            value={formData.pet.species}
+                            onChange={handlePetChange}
+                            className="w-full px-4 py-3 bg-white border border-blue-100 rounded-xl text-sm font-bold text-slate-700"
+                          >
+                            <option value="Canino">Canino</option>
+                            <option value="Felino">Felino</option>
+                            <option value="Outros">Outros</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Peso</label>
+                          <input 
+                            name="weight"
+                            value={formData.pet.weight}
+                            onChange={handlePetChange}
+                            className="w-full px-4 py-3 bg-white border border-blue-100 rounded-xl text-sm font-bold text-slate-700" 
+                            placeholder="Ex: 3kg"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Idade</label>
+                          <input 
+                            name="age"
+                            value={formData.pet.age}
+                            onChange={handlePetChange}
+                            className="w-full px-4 py-3 bg-white border border-blue-100 rounded-xl text-sm font-bold text-slate-700" 
+                            placeholder="Ex: 1,5 ano"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Porte</label>
+                          <select 
+                            name="size"
+                            value={formData.pet.size}
+                            onChange={handlePetChange}
+                            className="w-full px-4 py-3 bg-white border border-blue-100 rounded-xl text-sm font-bold text-slate-700"
+                          >
+                            <option value="Pequeno">Pequeno</option>
+                            <option value="Médio">Médio</option>
+                            <option value="Grande">Grande</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="pt-2">
+                        <FileUpload 
+                          id="pet_vaccine"
+                          label="Comprovante de Vacinação (Obrigatório)"
+                          onFileSelect={handleDocumentUpload('pet')}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
 
               <button
                 onClick={nextStep}
-                disabled={!formData.reservation.startDate || !formData.reservation.endDate}
-                className="w-full py-4 sm:py-5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold rounded-xl sm:rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                disabled={!formData.reservation.startDate || !formData.reservation.endDate || formData.reservation.totalValue <= 0 || (formData.pet.hasPet && !formData.pet.vaccineFile)}
+                className="w-full py-4 sm:py-5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold rounded-xl sm:rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2"
               >
                 Próxima Etapa <i className="fas fa-arrow-right"></i>
               </button>
@@ -335,7 +454,6 @@ const App: React.FC = () => {
             <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-4">
               <div className="border-b border-slate-100 pb-4">
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Dados do Titular</h2>
-                <p className="text-slate-500 text-xs sm:text-sm mt-1">Responsável pela reserva e eventual contrato.</p>
               </div>
 
               <div className="grid gap-5 sm:gap-6">
@@ -345,8 +463,7 @@ const App: React.FC = () => {
                     name="fullName"
                     value={formData.mainGuest.fullName}
                     onChange={handleMainGuestChange}
-                    placeholder="Conforme documento"
-                    className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base"
+                    className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl"
                   />
                 </div>
 
@@ -357,8 +474,7 @@ const App: React.FC = () => {
                       name="cpf"
                       value={formData.mainGuest.cpf}
                       onChange={handleMainGuestChange}
-                      placeholder="000.000.000-00"
-                      className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base"
+                      className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl"
                     />
                   </div>
                   <div className="space-y-2">
@@ -367,8 +483,7 @@ const App: React.FC = () => {
                       name="rg"
                       value={formData.mainGuest.rg}
                       onChange={handleMainGuestChange}
-                      placeholder="Número"
-                      className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base"
+                      className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl"
                     />
                   </div>
                 </div>
@@ -381,8 +496,7 @@ const App: React.FC = () => {
                       type="email"
                       value={formData.mainGuest.email}
                       onChange={handleMainGuestChange}
-                      placeholder="exemplo@email.com"
-                      className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base"
+                      className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl"
                     />
                   </div>
                   <div className="space-y-2">
@@ -391,17 +505,17 @@ const App: React.FC = () => {
                       name="phone"
                       value={formData.mainGuest.phone}
                       onChange={handleMainGuestChange}
-                      placeholder="(62) 9 9999-9999"
-                      className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base"
+                      className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Endereço Residencial</label>
+                  <label className="text-xs sm:text-sm font-semibold text-slate-700 uppercase tracking-wider">Endereço Residencial do Locatário</label>
                   <textarea
                     name="address"
                     rows={2}
+                    placeholder="Rua, Número, Complemento, Bairro, Cidade-UF, CEP"
                     value={formData.mainGuest.address}
                     onChange={handleMainGuestChange}
                     className="w-full px-4 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl resize-none text-sm sm:text-base"
@@ -411,7 +525,7 @@ const App: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6 border-t border-slate-100">
                   <FileUpload
                     id="main_doc"
-                    label="Foto do Documento (Frente/Verso)"
+                    label="Foto do Documento (RG/CNH)"
                     onFileSelect={handleDocumentUpload('main')}
                   />
                   <SelfieCapture 
@@ -422,47 +536,34 @@ const App: React.FC = () => {
               </div>
 
               <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 mt-8">
-                <button
-                  onClick={prevStep}
-                  className="w-full sm:flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-all active:scale-[0.98]"
-                >
-                  Voltar
-                </button>
+                <button onClick={prevStep} className="w-full sm:flex-1 py-4 bg-slate-100 font-bold rounded-xl">Voltar</button>
                 <button
                   onClick={nextStep}
-                  disabled={!formData.mainGuest.fullName || !formData.mainGuest.email || !formData.mainGuest.documentFile || !formData.mainGuest.selfieFile}
-                  className="w-full sm:flex-[2] py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                  disabled={!formData.mainGuest.fullName || !formData.mainGuest.address || !formData.mainGuest.documentFile || !formData.mainGuest.selfieFile}
+                  className="w-full sm:flex-[2] py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg disabled:bg-slate-300"
                 >
-                  Próxima Etapa <i className="fas fa-arrow-right"></i>
+                  Próxima Etapa
                 </button>
               </div>
             </div>
           )}
 
-          {/* STEP 2: COMPANIONS */}
           {step === FormStep.COMPANIONS && (
             <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-4">
               <div className="border-b border-slate-100 pb-4">
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Acompanhantes</h2>
-                <p className="text-slate-500 text-xs sm:text-sm mt-1">
-                  Cadastre as {formData.reservation.guestCount - 1} pessoas extras da reserva.
-                </p>
               </div>
-
               {formData.reservation.guestCount <= 1 ? (
-                <div className="py-16 text-center bg-slate-50 rounded-2xl sm:rounded-3xl border-2 border-dashed border-slate-200">
-                  <i className="fas fa-user-plus text-slate-300 text-5xl mb-4"></i>
-                  <p className="text-slate-500 font-medium px-8 text-sm sm:text-base">Nenhum acompanhante cadastrado. Reserva individual.</p>
+                <div className="py-16 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                  <p className="text-slate-500 font-medium">Nenhum acompanhante. Reserva individual.</p>
                 </div>
               ) : (
-                <div className="space-y-6 sm:space-y-8">
+                <div className="space-y-6">
                   {Array.from({ length: formData.reservation.guestCount - 1 }).map((_, idx) => (
                     <div key={idx} className="p-5 sm:p-8 bg-slate-50 rounded-2xl border border-slate-100 space-y-5">
                       <div className="flex items-center gap-3">
-                        <span className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-black">
-                          {idx + 1}
-                        </span>
-                        <h3 className="font-bold text-slate-700 text-sm sm:text-base uppercase tracking-wide">Acompanhante</h3>
+                        <span className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-black">{idx + 1}</span>
+                        <h3 className="font-bold text-slate-700 uppercase tracking-wide">Hóspede Adicional</h3>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <input
@@ -478,128 +579,48 @@ const App: React.FC = () => {
                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm"
                         />
                       </div>
-                      <FileUpload
-                        id={`comp_doc_${idx}`}
-                        label={`Foto do Documento (Opcional)`}
-                        onFileSelect={handleDocumentUpload('companion', idx)}
-                      />
                     </div>
                   ))}
                 </div>
               )}
-
               <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 mt-8">
-                <button
-                  onClick={prevStep}
-                  className="w-full sm:flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-all"
-                >
-                  Voltar
-                </button>
-                <button
-                  onClick={processContract}
-                  className="w-full sm:flex-[2] py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <><i className="fas fa-spinner fa-spin"></i> Preparando...</>
-                  ) : (
-                    <><i className="fas fa-file-invoice"></i> Gerar Resumo/Contrato</>
-                  )}
+                <button onClick={prevStep} className="w-full sm:flex-1 py-4 bg-slate-100 font-bold rounded-xl">Voltar</button>
+                <button onClick={processContract} className="w-full sm:flex-[2] py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg">
+                  {loading ? 'Gerando...' : 'Gerar Contrato'}
                 </button>
               </div>
             </div>
           )}
 
-          {/* STEP 3: CONTRACT PREVIEW */}
           {step === FormStep.CONTRACT_PREVIEW && (
             <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-4">
               <div className="border-b border-slate-100 pb-4">
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Finalização</h2>
-                <p className="text-slate-500 text-xs sm:text-sm mt-1">Revise os dados e o contrato gerado.</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Revisão do Contrato</h2>
+                <p className="text-slate-500 text-xs">Verifique os dados abaixo. O texto está em fonte Nunito e sem símbolos especiais.</p>
               </div>
-
-              <div className="prose prose-sm sm:prose-base prose-slate max-w-none bg-slate-50 p-4 sm:p-8 rounded-2xl border border-slate-200 h-[400px] sm:h-[500px] overflow-y-auto text-sm leading-relaxed whitespace-pre-wrap font-serif shadow-inner">
+              <div className="contract-preview bg-slate-50 p-6 sm:p-10 rounded-2xl border border-slate-200 h-[500px] overflow-y-auto text-slate-800 text-sm sm:text-base shadow-inner">
                 {formData.contractText}
               </div>
-
-              <div className="bg-amber-50 p-4 sm:p-6 rounded-xl border border-amber-100 flex gap-4 items-start">
-                <i className="fas fa-info-circle text-amber-500 text-xl mt-0.5"></i>
-                <p className="text-[11px] sm:text-sm text-amber-800 leading-normal">
-                  Ao clicar em <strong>Finalizar e Enviar</strong>, os dados serão registrados e, caso necessário, uma cópia deste contrato será enviada para o e-mail: <br/>
-                  <span className="font-bold underline decoration-amber-300">{formData.mainGuest.email}</span>.
-                </p>
-              </div>
-
               <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 mt-8">
-                <button
-                  onClick={prevStep}
-                  className="w-full sm:flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-all"
-                >
-                  Corrigir
-                </button>
-                <button
-                  onClick={finalizeProcess}
-                  disabled={loading}
-                  className="w-full sm:flex-[2] py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
-                >
-                  {loading ? (
-                    <><i className="fas fa-spinner fa-spin"></i> Processando...</>
-                  ) : (
-                    <><i className="fas fa-signature"></i> Finalizar e Enviar</>
-                  )}
+                <button onClick={prevStep} className="w-full sm:flex-1 py-4 bg-slate-100 font-bold rounded-xl">Corrigir</button>
+                <button onClick={finalizeProcess} className="w-full sm:flex-[2] py-4 bg-emerald-600 text-white font-bold rounded-xl shadow-lg">
+                  Finalizar e Enviar
                 </button>
               </div>
             </div>
           )}
 
-          {/* STEP 4: SUCCESS */}
           {step === FormStep.SUCCESS && (
-            <div className="text-center py-10 sm:py-16 space-y-6 sm:space-y-8 animate-in zoom-in duration-500">
-              <div className="w-20 h-20 sm:w-28 sm:h-28 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
-                <i className="fas fa-check text-4xl sm:text-5xl"></i>
+            <div className="text-center py-16 space-y-8 animate-in zoom-in">
+              <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                <i className="fas fa-check text-4xl"></i>
               </div>
-              <div className="space-y-3">
-                <h2 className="text-2xl sm:text-4xl font-black text-slate-800">Sucesso!</h2>
-                <p className="text-slate-500 text-sm sm:text-base max-w-sm mx-auto leading-relaxed">
-                  Sua reserva e cadastro foram realizados com sucesso por Wellington Rodovalho Fonseca.
-                </p>
-              </div>
-              
-              <div className="p-4 sm:p-6 bg-slate-50 rounded-2xl inline-block border border-slate-200 space-y-2">
-                <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Protocolo WRF</p>
-                <code className="text-blue-600 font-mono font-black text-lg sm:text-2xl tracking-tighter">
-                  WRF-{Math.floor(Math.random()*900000)+100000}
-                </code>
-              </div>
-
-              <div className="pt-6 sm:pt-10">
-                <button
-                  onClick={() => window.location.reload()}
-                  className="w-full sm:w-auto px-10 py-4 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-all active:scale-[0.98]"
-                >
-                  Novo Cadastro
-                </button>
-              </div>
+              <h2 className="text-3xl font-black text-slate-800">Concluído!</h2>
+              <p className="text-slate-500 max-w-sm mx-auto">Sua reserva foi processada com sucesso por Wellington Rodovalho Fonseca.</p>
+              <button onClick={() => window.location.reload()} className="px-10 py-4 bg-slate-800 text-white font-bold rounded-xl">Novo Cadastro</button>
             </div>
           )}
         </div>
-
-        {/* Footer Info - Always Responsive */}
-        <footer className="mt-8 mb-4 text-center px-4">
-          <div className="flex flex-col items-center gap-4">
-             <Logo className="w-8 h-8 opacity-40" />
-             <div className="space-y-1">
-                <p className="text-slate-800 font-bold text-[10px] sm:text-xs uppercase tracking-wider">Responsável Técnico</p>
-                <p className="text-slate-600 text-[10px] sm:text-[11px] font-medium uppercase">
-                  WELLINGTON RODOVALHO FONSECA | CRECI-GO 42695 | CNAI 54826
-                </p>
-             </div>
-             <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-slate-400 text-[9px] sm:text-[10px] font-medium border-t border-slate-200 pt-4 w-full">
-                <span className="flex items-center gap-1.5"><i className="fas fa-lock text-blue-400/50"></i> LGPD Compliant</span>
-                <span className="flex items-center gap-1.5"><i className="fas fa-shield-alt text-blue-400/50"></i> Secure Connection</span>
-                <span className="flex items-center gap-1.5"><i className="fas fa-copyright text-blue-400/50"></i> 2024 Wellington R. Fonseca</span>
-             </div>
-          </div>
-        </footer>
       </main>
     </div>
   );

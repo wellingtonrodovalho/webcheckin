@@ -137,8 +137,7 @@ const App: React.FC = () => {
       setStep(FormStep.CONTRACT_PREVIEW);
     } catch (error: any) {
       console.error("Erro no processamento do contrato:", error);
-      // Mensagem clara de orientação para o usuário
-      alert("Houve uma instabilidade momentânea na geração do contrato. Por favor, aguarde 5 segundos e clique no botão 'Gerar Contrato' novamente.");
+      alert("Houve uma instabilidade momentânea na geração do contrato via IA. Por favor, clique em 'Gerar Contrato' novamente.");
     } finally {
       setLoading(false);
     }
@@ -163,7 +162,6 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-12 bg-slate-50 flex flex-col font-['Nunito']">
-      {/* Header */}
       <header className="bg-white border-b sticky top-0 z-50 shadow-sm transition-all duration-300">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -201,7 +199,6 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Content Area */}
       <main className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 mt-4 sm:mt-8">
         {step > FormStep.CONSENT && step !== FormStep.SUCCESS && (
           <div className="mb-4 sm:mb-8 overflow-x-auto">

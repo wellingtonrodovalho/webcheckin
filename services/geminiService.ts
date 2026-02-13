@@ -3,65 +3,52 @@ import { GoogleGenAI } from "@google/genai";
 import { FullFormData, PROPERTIES } from "../types";
 
 export const generateContract = async (data: FullFormData): Promise<string> => {
-  // Inicialização rigorosa conforme diretrizes: usa process.env.API_KEY diretamente
+  // Inicialização direta conforme as diretrizes
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const property = PROPERTIES.find(p => p.id === data.reservation.propertyId) || PROPERTIES[0];
   
-  let petClause = "";
-  if (property.petAllowed) {
-    if (data.pet.hasPet) {
-      petClause = `CLÁUSULA PET: Autorizada a permanência do animal doméstico de nome ${data.pet.name || 'informado'}, espécie ${data.pet.species || ''}, raça ${data.pet.breed || ''}. O locatário é integralmente responsável por danos ou ruídos causados pelo animal.`;
-    } else {
-      petClause = "CLÁUSULA PET: O imóvel permite animais, contudo o locatário declara expressamente que não haverá animais de estimação acompanhando os hóspedes nesta locação.";
-    }
-  } else {
-    petClause = "CLÁUSULA PET: É terminantemente PROIBIDA a entrada de qualquer tipo de animal de estimação no imóvel, sob pena de rescisão contratual imediata e multa.";
-  }
+  const petClause = property.petAllowed 
+    ? (data.pet.hasPet 
+        ? `CLÁUSULA SOBRE ANIMAIS: Autorizada a permanência do animal doméstico: ${data.pet.name}, ${data.pet.species}, ${data.pet.breed}. O locatário assume total responsabilidade por danos.` 
+        : "CLÁUSULA SOBRE ANIMAIS: O imóvel permite pets, mas o locatário informou que não trará nenhum.")
+    : "CLÁUSULA SOBRE ANIMAIS: É proibida a permanência de animais no imóvel.";
 
-  // Prompt estruturado para evitar filtros de segurança e garantir formatação limpa
   const prompt = `
-    Aja como um advogado especializado em direito imobiliário brasileiro e redija um CONTRATO DE LOCAÇÃO POR TEMPORADA.
-    
-    DADOS PARA O CONTRATO:
-    - LOCADOR: ${property.ownerName}, CPF: ${property.ownerCpf}, ${property.ownerStatus}, ${property.ownerProfession}.
-    - LOCATÁRIO: ${data.mainGuest.fullName}, CPF: ${data.mainGuest.cpf}, RG: ${data.mainGuest.rg}, Residente em: ${data.mainGuest.address}.
-    - IMÓVEL: ${property.name} localizado em ${property.address}.
-    - PERÍODO: Check-in em ${data.reservation.startDate} e Check-out em ${data.reservation.endDate}.
-    - VALOR TOTAL: R$ ${data.reservation.totalValue.toFixed(2)}.
-    - HÓSPEDES: Total de ${data.reservation.guestCount} pessoa(s). Acompanhantes: ${data.companions.map(c => c.name).join(', ') || 'Apenas o titular'}.
+    Escreva um CONTRATO DE LOCAÇÃO POR TEMPORADA formal.
+    LOCADOR: ${property.ownerName}, CPF: ${property.ownerCpf}, ${property.ownerStatus}, ${property.ownerProfession}.
+    LOCATÁRIO: ${data.mainGuest.fullName}, CPF: ${data.mainGuest.cpf}, RG: ${data.mainGuest.rg}, Residente em: ${data.mainGuest.address}.
+    IMÓVEL: ${property.name} em ${property.address}.
+    PERÍODO: De ${data.reservation.startDate} a ${data.reservation.endDate}.
+    VALOR: R$ ${data.reservation.totalValue.toFixed(2)}.
+    HÓSPEDES: ${data.reservation.guestCount} pessoa(s). Acompanhantes: ${data.companions.map(c => c.name).join(', ') || 'Nenhum'}.
     
     ${petClause}
     
-    REGRAS OBRIGATÓRIAS DE RESPOSTA:
-    1. Retorne APENAS o texto do contrato pronto para leitura.
-    2. NÃO utilize símbolos de markdown como asteriscos (*), hashtags (#), sublinhados (_) ou colchetes ([]).
-    3. Use numeração simples para as cláusulas (1., 2., 3...).
-    4. Mantenha um tom profissional, formal e jurídico.
-    5. O contrato deve mencionar o corretor Wellington Rodovalho Fonseca como responsável pela intermediação.
+    REGRAS:
+    - Retorne APENAS o texto do contrato.
+    - NÃO use markdown (asteriscos, hashtags, negrito).
+    - Use numeração simples para cláusulas.
+    - Mencione Wellington Rodovalho Fonseca como corretor intermediário.
   `;
 
   try {
-    // Usando gemini-3-pro-preview para maior inteligência na elaboração do documento
+    // Correção Crítica: Usando a estrutura simplificada de string para o prompt
+    // e o modelo flash-preview para evitar timeouts
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
-      contents: [{ parts: [{ text: prompt }] }],
-      config: {
-        temperature: 0.7,
-        topP: 0.95,
-        topK: 64
-      }
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
     });
 
     const text = response.text;
     if (!text) {
-      throw new Error("A API retornou uma resposta sem texto.");
+      throw new Error("Resposta da API vazia");
     }
 
-    // Limpeza final de caracteres residuais de markdown
+    // Limpeza de segurança para garantir texto puro
     return text.replace(/[*#_\[\]]/g, '').trim();
   } catch (err: any) {
-    console.error("Erro crítico na API Gemini:", err);
-    throw err; // Repassa para o componente UI tratar
+    console.error("Falha na chamada Gemini:", err);
+    throw new Error("Erro na comunicação com a IA");
   }
 };

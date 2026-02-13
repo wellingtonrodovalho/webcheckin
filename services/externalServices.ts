@@ -21,7 +21,7 @@ const formatDate = (dateStr: string) => {
 export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> => {
   if (!GOOGLE_SHEETS_WEBAPP_URL) return false;
 
-  // Payload completo incluindo dados detalhados do proprietário e arquivos base64
+  // Payload completo incluindo dados detalhados do proprietário, nacionalidade do titular e arquivos base64
   const payload = {
     "Data de Envio": new Date().toLocaleString('pt-BR'),
     "Imóvel": data.propertyDetails?.name || 'N/A',
@@ -38,6 +38,7 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
     "Nome Titular": data.mainGuest.fullName,
     "CPF Titular": data.mainGuest.cpf,
     "RG Titular": data.mainGuest.rg,
+    "Nacionalidade": data.mainGuest.nationality,
     "E-mail": data.mainGuest.email,
     "Telefone": data.mainGuest.phone,
     "Endereço": data.mainGuest.address,

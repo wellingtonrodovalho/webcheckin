@@ -126,6 +126,7 @@ export interface MainGuest {
   fullName: string;
   cpf: string;
   rg: string;
+  nationality: string;
   email: string;
   phone: string;
   address: string;

@@ -1,11 +1,9 @@
 
 /**
- * GOOGLE APPS SCRIPT - VERSÃO AUTO-CONFIGURÁVEL
+ * GOOGLE APPS SCRIPT - VERSÃO COM SUPORTE A ARQUIVOS (DOCS/SELFIES)
  * 
- * 1. Limpe sua planilha completamente.
- * 2. Cole este código.
- * 3. Salve e Implante como "Nova Versão".
- * 4. Configure "Quem pode acessar" como "Qualquer pessoa".
+ * Este script salva imagens enviadas em base64 no Google Drive
+ * e coloca o link de visualização na planilha.
  */
 
 function doPost(e) {
@@ -14,59 +12,72 @@ function doPost(e) {
 
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheets()[0]; // Pega a primeira aba
+    var sheet = ss.getSheets()[0];
     var contents = e.postData.contents;
     var data = JSON.parse(contents);
     
-    // 1. Identificar cabeçalhos atuais
+    // Pasta para salvar os arquivos (Cria se não existir)
+    var folderName = "Documentos_Hospedes_Reservas";
+    var folders = DriveApp.getFoldersByName(folderName);
+    var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+
+    // 1. Identificar e Criar cabeçalhos
     var lastCol = Math.max(sheet.getLastColumn(), 1);
     var headers = [];
-    
     if (sheet.getLastColumn() > 0) {
       headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function(h) {
         return h.toString().trim();
       }).filter(String);
     }
 
-    // 2. Verificar se o JSON tem chaves que não existem nas colunas
     var jsonKeys = Object.keys(data);
     var missingKeys = jsonKeys.filter(function(key) {
       return headers.indexOf(key) === -1;
     });
 
-    // 3. Se houver chaves novas, adiciona como novas colunas
     if (missingKeys.length > 0) {
       var startCol = headers.length + 1;
       sheet.getRange(1, startCol, 1, missingKeys.length)
            .setValues([missingKeys])
            .setFontWeight("bold")
-           .setBackground("#F1F5F9")
-           .setVerticalAlignment("middle");
-      
-      // Atualiza a lista de cabeçalhos para incluir as novas
+           .setBackground("#F1F5F9");
       headers = headers.concat(missingKeys);
-      // Ajusta a largura das novas colunas
-      for(var i=0; i < missingKeys.length; i++) {
-        sheet.setColumnWidth(startCol + i, 150);
-      }
     }
 
-    // 4. Montar a linha de dados seguindo a ordem exata dos cabeçalhos
+    // 2. Processar dados e converter base64 em links do Drive
     var rowData = headers.map(function(header) {
-      return data[header] !== undefined ? data[header] : "";
+      var value = data[header];
+      
+      // Se o valor parecer uma imagem em base64
+      if (typeof value === 'string' && value.indexOf('data:image') === 0) {
+        try {
+          var contentType = value.substring(5, value.indexOf(';'));
+          var extension = contentType.split('/')[1];
+          var base64Data = value.substring(value.indexOf(',') + 1);
+          var decoded = Utilities.base64Decode(base64Data);
+          var blob = Utilities.newBlob(decoded, contentType, header + "_" + data["Nome Titular"] + "_" + new Date().getTime() + "." + extension);
+          
+          var file = folder.createFile(blob);
+          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+          
+          return file.getUrl();
+        } catch (err) {
+          return "Erro ao processar imagem: " + err.toString();
+        }
+      }
+      
+      return value !== undefined ? value : "";
     });
 
-    // 5. Adicionar os dados na última linha
+    // 3. Adicionar na planilha
     sheet.appendRow(rowData);
     
-    // Formatação de conveniência para a nova linha
-    var lastRow = sheet.getLastRow();
-    sheet.getRange(lastRow, 1, 1, headers.length).setVerticalAlignment("top");
+    // Auto-ajuste de colunas
+    sheet.autoResizeColumns(1, headers.length);
     
     return ContentService.createTextOutput("Sucesso").setMimeType(ContentService.MimeType.TEXT);
 
   } catch (error) {
-    console.error("Erro: " + error.toString());
     return ContentService.createTextOutput("Erro: " + error.toString()).setMimeType(ContentService.MimeType.TEXT);
   } finally {
     lock.releaseLock();

@@ -2,7 +2,7 @@
 import { FullFormData } from "../types";
 
 // URL ATUALIZADA DA VERSÃO 11 (Conforme sua foto)
-const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxYh_OKaU0zVQU-vhlnBJCTuXBJrjmLjzkmY4pfu7kQVqSrQyYEawBNS2AwTz5vWspK/exec";
+const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/library/d/1Wg0NFQZYs0m_mJGqpLNod6ArRHEW6XKZaZCFIlTPXfcvGWW22uqddAw6/12WspK/exec";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { 

@@ -1,8 +1,8 @@
 
 import { FullFormData } from "../types";
 
-// URL ATUALIZADA DA VERSÃO 11 (Conforme sua foto)
-const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/library/d/1Wg0NFQZYs0m_mJGqpLNod6ArRHEW6XKZaZCFIlTPXfcvGWW22uqddAw6/12WspK/exec";
+// URL CORRIGIDA PARA A VERSÃO DE PRODUÇÃO DO USUÁRIO
+const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxYh_OKaU0zVQU-vhInBJCTuXBJrjmLjzkmY4pfu7kQVqSrQyYEAwBNS2AwTz5vWspK/exec";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { 
@@ -17,7 +17,7 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
     return false;
   }
 
-  // Payload simplificado para garantir compatibilidade com o script
+  // Mapeamento dos dados para o formato esperado pelo Google Script
   const payload = {
     "Data de Envio": new Date().toLocaleString('pt-BR'),
     "Imóvel": data.propertyDetails?.name || 'N/A',
@@ -38,10 +38,9 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
     "Doc: Vacina Pet": data.pet.vaccineFile || 'N/A'
   };
 
-  console.log("Tentando enviar para a nova URL (Versão 11)...");
-
   try {
-    // Usamos no-cors para evitar erros de redirecionamento do Google
+    // Usamos no-cors pois o Google Apps Script faz redirecionamentos que o navegador bloqueia por segurança
+    // O no-cors permite que a requisição chegue ao destino sem erro de pre-flight
     await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
       method: 'POST',
       mode: 'no-cors',
@@ -50,11 +49,10 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
       body: JSON.stringify(payload)
     });
     
-    // Em modo no-cors o fetch não retorna erro se o Google receber, 
-    // então retornamos true se chegar aqui.
+    // Em modo no-cors, se não houver erro de rede, consideramos sucesso
     return true;
   } catch (error) {
-    console.error("Erro ao enviar para Google Sheets:", error);
+    console.error("Erro crítico ao enviar para Google Sheets:", error);
     return false;
   }
 };

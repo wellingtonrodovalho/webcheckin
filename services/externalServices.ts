@@ -1,7 +1,6 @@
 
 import { FullFormData } from "../types";
 
-// URL CORRIGIDA PARA A VERSÃO DE PRODUÇÃO DO USUÁRIO
 const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxYh_OKaU0zVQU-vhInBJCTuXBJrjmLjzkmY4pfu7kQVqSrQyYEAwBNS2AwTz5vWspK/exec";
 
 const formatCurrency = (value: number) => {
@@ -12,12 +11,8 @@ const formatCurrency = (value: number) => {
 };
 
 export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> => {
-  if (!GOOGLE_SHEETS_WEBAPP_URL) {
-    console.error("URL da Planilha não configurada.");
-    return false;
-  }
+  if (!GOOGLE_SHEETS_WEBAPP_URL) return false;
 
-  // Mapeamento dos dados para o formato esperado pelo Google Script
   const payload = {
     "Data de Envio": new Date().toLocaleString('pt-BR'),
     "Imóvel": data.propertyDetails?.name || 'N/A',
@@ -39,20 +34,20 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
   };
 
   try {
-    // Usamos no-cors pois o Google Apps Script faz redirecionamentos que o navegador bloqueia por segurança
-    // O no-cors permite que a requisição chegue ao destino sem erro de pre-flight
+    // Usando URLSearchParams para enviar como application/x-www-form-urlencoded
+    // Este é o método mais robusto para POST em modo no-cors para Google Scripts
+    const params = new URLSearchParams();
+    params.append('dadosJSON', JSON.stringify(payload));
+
     await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
       method: 'POST',
       mode: 'no-cors',
-      cache: 'no-cache',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: params
     });
     
-    // Em modo no-cors, se não houver erro de rede, consideramos sucesso
     return true;
   } catch (error) {
-    console.error("Erro crítico ao enviar para Google Sheets:", error);
+    console.error("Erro no envio:", error);
     return false;
   }
 };

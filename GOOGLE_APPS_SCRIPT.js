@@ -1,21 +1,10 @@
 
 /**
- * GOOGLE APPS SCRIPT - VERSÃO COM ENVIO DE E-MAIL
- * Este script salva os dados na planilha, as fotos no Drive e envia por e-mail.
+ * GOOGLE APPS SCRIPT - VERSÃO ULTRA ROBUSTA
+ * Wellington Rodovalho - Web Check-in
  */
 
 const EMAIL_DESTINATARIO = "wellington.rodovalho@gmail.com";
-
-function testePlanilha() {
-  try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheets()[0];
-    sheet.appendRow([new Date(), "TESTE MANUAL", "O script tem permissão de escrita!"]);
-    Browser.msgBox("Sucesso! Uma linha de teste foi adicionada à sua planilha.");
-  } catch (e) {
-    Browser.msgBox("Erro: " + e.toString());
-  }
-}
 
 function doPost(e) {
   var lock = LockService.getScriptLock();
@@ -25,82 +14,87 @@ function doPost(e) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheets()[0];
     
-    var contents = e && e.postData ? e.postData.contents : null;
-    if (!contents) {
-      return ContentService.createTextOutput("Erro: Dados não recebidos").setMimeType(ContentService.MimeType.TEXT);
+    // Captura o JSON - Tenta primeiro pelo parâmetro, depois pelo corpo
+    var rawData = e.parameter.dadosJSON || (e.postData ? e.postData.contents : null);
+    
+    if (!rawData) {
+      logDebug("Erro: Nenhum dado encontrado na requisição.");
+      return ContentService.createTextOutput("Erro: Sem conteúdo").setMimeType(ContentService.MimeType.TEXT);
     }
     
-    var data = JSON.parse(contents);
-    
-    // Pasta para salvar as fotos no Drive
+    var data = JSON.parse(rawData);
+    logDebug("Dados recebidos com sucesso para: " + data["Nome Titular"]);
+
+    // 1. Pasta para fotos
     var folderName = "Fotos_WebCheckin";
     var folders = DriveApp.getFoldersByName(folderName);
     var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
 
-    // Preparação para o E-mail
+    // 2. Preparar Planilha e E-mail
     var attachments = [];
-    var emailBody = "Novo cadastro de hóspede recebido pelo sistema de Web Check-in.\n\n";
-    emailBody += "--- DADOS DO FORMULÁRIO ---\n\n";
-
-    // Obter ou criar cabeçalhos na planilha
-    var lastCol = sheet.getLastColumn();
-    var headers = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
+    var emailBody = "Novo cadastro de hóspede recebido.\n\n--- DADOS ---\n";
     
+    var headers = sheet.getLastColumn() > 0 ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] : [];
     if (headers.length === 0) {
       headers = Object.keys(data);
       sheet.appendRow(headers);
     }
 
-    // Processar os campos para Planilha, Drive e E-mail
     var row = headers.map(function(h) {
       var val = data[h] || "";
       
-      // Se for uma imagem Base64
+      // Se for imagem Base64
       if (typeof val === 'string' && val.indexOf('data:image') === 0) {
         try {
-          var contentType = val.split(':')[1].split(';')[0];
-          var base64Data = val.split(',')[1];
+          var parts = val.split(',');
+          var contentType = parts[0].split(':')[1].split(';')[0];
+          var base64Data = parts[1];
           var blob = Utilities.newBlob(Utilities.base64Decode(base64Data), contentType, h.replace(/[^a-z0-9]/gi, '_') + ".jpg");
           
-          // Salva no Drive
           var file = folder.createFile(blob);
           file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
           
-          // Adiciona aos anexos do e-mail
           attachments.push(blob);
-          
-          emailBody += h + ": [Foto Anexada e Salva no Drive]\n";
+          emailBody += h + ": [Link Drive: " + file.getUrl() + "]\n";
           return file.getUrl();
         } catch (err) {
-          emailBody += h + ": [Erro ao processar imagem]\n";
-          return "Erro Imagem";
+          return "Erro na Imagem";
         }
       }
       
-      // Se for texto normal, adiciona ao corpo do e-mail
       emailBody += h + ": " + val + "\n";
       return val;
     });
 
-    // Salva na Planilha
     sheet.appendRow(row);
     
-    // Envia o E-mail
-    var guestName = data["Nome Titular"] || "Hóspede";
-    var propertyName = data["Imóvel"] || "Imóvel não especificado";
-    
-    MailApp.sendEmail({
-      to: EMAIL_DESTINATARIO,
-      subject: "WEB CHECK-IN: " + guestName + " - " + propertyName,
-      body: emailBody + "\n\nAs fotos originais foram enviadas em anexo a este e-mail.",
-      attachments: attachments
-    });
-    
+    // 3. Enviar E-mail
+    try {
+      MailApp.sendEmail({
+        to: EMAIL_DESTINATARIO,
+        subject: "CHECK-IN: " + (data["Nome Titular"] || "Hóspede") + " - " + (data["Imóvel"] || ""),
+        body: emailBody + "\nAs fotos originais estão em anexo.",
+        attachments: attachments
+      });
+    } catch (mErr) {
+      logDebug("Erro e-mail: " + mErr.toString());
+    }
+
     return ContentService.createTextOutput("Sucesso").setMimeType(ContentService.MimeType.TEXT);
 
   } catch (error) {
+    logDebug("Erro Geral: " + error.toString());
     return ContentService.createTextOutput("Erro: " + error.toString()).setMimeType(ContentService.MimeType.TEXT);
   } finally {
     lock.releaseLock();
   }
+}
+
+// Função auxiliar para gravar erros na planilha e ajudar a descobrir o que houve
+function logDebug(msg) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var logSheet = ss.getSheetByName("DEBUG_LOG") || ss.insertSheet("DEBUG_LOG");
+    logSheet.appendRow([new Date(), msg]);
+  } catch(e) {}
 }

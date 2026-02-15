@@ -10,7 +10,6 @@ import Logo from './components/Logo';
 const App: React.FC = () => {
   const [step, setStep] = useState<FormStep>(FormStep.CONSENT);
   const [loading, setLoading] = useState(false);
-  const formTopRef = useRef<HTMLDivElement>(null);
   
   const [formData, setFormData] = useState<FullFormData>({
     reservation: {
@@ -183,10 +182,12 @@ const App: React.FC = () => {
               <h2 className="text-lg font-black text-slate-800 uppercase border-b pb-2">2. Identificação do Titular</h2>
               <div className="grid gap-4">
                 <input name="fullName" value={formData.mainGuest.fullName} onChange={handleMainGuestChange} placeholder="NOME COMPLETO" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold uppercase placeholder:text-slate-300" />
+                
                 <div className="grid grid-cols-2 gap-4">
-                  <input name="cpf" value={formData.mainGuest.cpf} onChange={handleMainGuestChange} placeholder="CPF" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl" />
-                  <input name="rg" value={formData.mainGuest.rg} onChange={handleMainGuestChange} placeholder="RG" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl" />
+                  <input name="cpf" value={formData.mainGuest.cpf} onChange={handleMainGuestChange} placeholder="CPF" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                  <input name="rg" value={formData.mainGuest.rg} onChange={handleMainGuestChange} placeholder="RG" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <select name="maritalStatus" value={formData.mainGuest.maritalStatus} onChange={handleMainGuestChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold">
                     <option value="">ESTADO CIVIL</option>
@@ -194,17 +195,37 @@ const App: React.FC = () => {
                     <option value="Casado(a)">Casado(a)</option>
                     <option value="União Estável">União Estável</option>
                   </select>
-                  <input name="profession" value={formData.mainGuest.profession} onChange={handleMainGuestChange} placeholder="PROFISSÃO" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl" />
+                  <input name="profession" value={formData.mainGuest.profession} onChange={handleMainGuestChange} placeholder="PROFISSÃO" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
                 </div>
-                <input name="email" value={formData.mainGuest.email} onChange={handleMainGuestChange} placeholder="E-MAIL" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl" />
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input name="email" value={formData.mainGuest.email} onChange={handleMainGuestChange} placeholder="E-MAIL" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                  <input name="phone" value={formData.mainGuest.phone} onChange={handleMainGuestChange} placeholder="TELEFONE / WHATSAPP" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                </div>
+
+                <textarea 
+                  name="address" 
+                  value={formData.mainGuest.address} 
+                  onChange={handleMainGuestChange} 
+                  placeholder="ENDEREÇO COMPLETO (RUA, NÚMERO, BAIRRO, CIDADE/UF)" 
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold min-h-[80px] placeholder:text-slate-300"
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <FileUpload id="doc_main" label="Doc. Identidade (Frente)" onFileSelect={handleUpload('main')} />
                   <SelfieCapture label="Selfie do Titular" onCapture={(base64) => setFormData(prev => ({ ...prev, mainGuest: { ...prev.mainGuest, selfieFile: base64 } }))} />
                 </div>
               </div>
+
               <div className="flex gap-4">
-                <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl">VOLTAR</button>
-                <button onClick={nextStep} disabled={!formData.mainGuest.documentFile || !formData.mainGuest.selfieFile} className="flex-[2] py-4 bg-blue-600 text-white font-black rounded-xl">PRÓXIMO: PET</button>
+                <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl text-slate-600">VOLTAR</button>
+                <button 
+                  onClick={nextStep} 
+                  disabled={!formData.mainGuest.fullName || !formData.mainGuest.cpf || !formData.mainGuest.phone || !formData.mainGuest.documentFile || !formData.mainGuest.selfieFile} 
+                  className="flex-[2] py-4 bg-blue-600 text-white font-black rounded-xl disabled:opacity-30 transition-all"
+                >
+                  PRÓXIMO: PET
+                </button>
               </div>
             </div>
           )}
@@ -249,7 +270,7 @@ const App: React.FC = () => {
               )}
 
               <div className="flex gap-4">
-                <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl">VOLTAR</button>
+                <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl text-slate-600">VOLTAR</button>
                 <button onClick={nextStep} className="flex-[2] py-4 bg-blue-600 text-white font-black rounded-xl">PRÓXIMO: HÓSPEDES</button>
               </div>
             </div>
@@ -271,8 +292,8 @@ const App: React.FC = () => {
                 <div className="py-12 text-center text-slate-400 bg-slate-50 rounded-3xl border-2 border-dashed">Reserva Individual</div>
               )}
               <div className="flex gap-4">
-                <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl">VOLTAR</button>
-                <button onClick={finalizeProcess} disabled={loading} className="flex-[2] py-4 bg-emerald-600 text-white font-black rounded-xl shadow-lg flex items-center justify-center gap-2">
+                <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl text-slate-600">VOLTAR</button>
+                <button onClick={finalizeProcess} disabled={loading} className="flex-[2] py-4 bg-emerald-600 text-white font-black rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95">
                   {loading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-paper-plane"></i>}
                   {loading ? 'ENVIANDO...' : 'FINALIZAR'}
                 </button>

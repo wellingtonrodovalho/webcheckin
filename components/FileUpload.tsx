@@ -22,8 +22,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
         let width = img.width;
         let height = img.height;
 
-        // Redimensionar para manter o Base64 leve e evitar crashes no mobile
-        const maxDimension = 1200;
+        // Limite mais rigoroso para mobile (800px) para reduzir tamanho do Base64
+        const maxDimension = 800;
         if (width > maxDimension || height > maxDimension) {
           if (width > height) {
             height = (height * maxDimension) / width;
@@ -39,8 +39,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          // Comprimir como JPEG 0.7
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          // Qualidade 0.4 para economizar dados
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.4);
           setPreview(compressedBase64);
           onFileSelect(compressedBase64);
         }
@@ -49,28 +49,13 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
       img.src = e.target?.result as string;
     };
     
-    reader.onerror = () => {
-      alert("Erro ao ler arquivo.");
-      setIsProcessing(false);
-    };
-
     reader.readAsDataURL(file);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.type.startsWith('image/')) {
-        processImage(file);
-      } else {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64String = reader.result as string;
-          setPreview(base64String);
-          onFileSelect(base64String);
-        };
-        reader.readAsDataURL(file);
-      }
+      processImage(file);
     }
   };
 
@@ -82,7 +67,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
           type="file"
           id={id}
           accept="image/*"
-          /* Atributo 'capture' removido para permitir escolha entre Galeria e Câmera */
           onChange={handleFileChange}
           className="hidden"
         />
@@ -95,17 +79,17 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
           {isProcessing ? (
             <div className="flex flex-col items-center">
               <i className="fas fa-circle-notch fa-spin text-blue-500 text-2xl mb-2"></i>
-              <span className="text-slate-500 text-xs font-bold uppercase">Processando...</span>
+              <span className="text-slate-500 text-xs font-bold uppercase">Comprimindo...</span>
             </div>
           ) : preview ? (
             <div className="flex items-center gap-3">
               <i className="fas fa-check-circle text-emerald-500 text-2xl"></i>
-              <span className="text-emerald-700 font-medium text-sm">Documento Anexado</span>
+              <span className="text-emerald-700 font-medium text-sm">Pronto</span>
             </div>
           ) : (
             <div className="text-center p-4">
-              <i className="fas fa-file-upload text-slate-400 text-3xl mb-2"></i>
-              <p className="text-slate-500 text-[10px] font-bold uppercase">Anexar ou Tirar Foto do Documento</p>
+              <i className="fas fa-camera text-slate-400 text-3xl mb-2"></i>
+              <p className="text-slate-500 text-[10px] font-bold uppercase">Anexar ou Tirar Foto</p>
             </div>
           )}
         </label>

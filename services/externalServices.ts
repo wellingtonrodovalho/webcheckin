@@ -34,20 +34,19 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
   };
 
   try {
-    // Usando URLSearchParams para enviar como application/x-www-form-urlencoded
-    // Este é o método mais robusto para POST em modo no-cors para Google Scripts
-    const params = new URLSearchParams();
-    params.append('dadosJSON', JSON.stringify(payload));
-
+    // Enviando como string pura (text/plain)
+    // Isso é considerado uma "Simple Request" pelo navegador e não dispara bloqueios de CORS
     await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
       method: 'POST',
       mode: 'no-cors',
-      body: params
+      cache: 'no-cache',
+      body: JSON.stringify(payload)
     });
     
+    // No modo no-cors, o navegador não deixa ler a resposta, mas se não deu erro de rede, consideramos enviado.
     return true;
   } catch (error) {
-    console.error("Erro no envio:", error);
+    console.error("Erro de rede no dispositivo móvel:", error);
     return false;
   }
 };

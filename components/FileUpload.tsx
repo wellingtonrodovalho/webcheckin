@@ -10,11 +10,26 @@ interface FileUploadProps {
 const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
   const [preview, setPreview] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [fileType, setFileType] = useState<'image' | 'pdf' | null>(null);
 
-  const processImage = (file: File) => {
+  const processFile = (file: File) => {
     setIsProcessing(true);
     const reader = new FileReader();
     
+    // Se for PDF, não passamos pelo Canvas (compressão), pois destruiria o arquivo
+    if (file.type === 'application/pdf') {
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string;
+        setPreview(base64);
+        setFileType('pdf');
+        onFileSelect(base64);
+        setIsProcessing(false);
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    // Se for Imagem, mantemos a compressão para economizar dados
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
@@ -22,7 +37,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
         let width = img.width;
         let height = img.height;
 
-        // Limite mais rigoroso para mobile (800px) para reduzir tamanho do Base64
         const maxDimension = 800;
         if (width > maxDimension || height > maxDimension) {
           if (width > height) {
@@ -39,23 +53,22 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          // Qualidade 0.4 para economizar dados
           const compressedBase64 = canvas.toDataURL('image/jpeg', 0.4);
           setPreview(compressedBase64);
+          setFileType('image');
           onFileSelect(compressedBase64);
         }
         setIsProcessing(false);
       };
       img.src = e.target?.result as string;
     };
-    
     reader.readAsDataURL(file);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      processImage(file);
+      processFile(file);
     }
   };
 
@@ -66,7 +79,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
         <input
           type="file"
           id={id}
-          accept="image/*"
+          accept="image/*,application/pdf"
           onChange={handleFileChange}
           className="hidden"
         />
@@ -79,17 +92,19 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
           {isProcessing ? (
             <div className="flex flex-col items-center">
               <i className="fas fa-circle-notch fa-spin text-blue-500 text-2xl mb-2"></i>
-              <span className="text-slate-500 text-xs font-bold uppercase">Comprimindo...</span>
+              <span className="text-slate-500 text-xs font-bold uppercase tracking-tighter">Processando arquivo...</span>
             </div>
           ) : preview ? (
-            <div className="flex items-center gap-3">
-              <i className="fas fa-check-circle text-emerald-500 text-2xl"></i>
-              <span className="text-emerald-700 font-medium text-sm">Pronto</span>
+            <div className="flex flex-col items-center gap-1">
+              <i className={`fas ${fileType === 'pdf' ? 'fa-file-pdf text-red-500' : 'fa-check-circle text-emerald-500'} text-2xl`}></i>
+              <span className={`${fileType === 'pdf' ? 'text-red-700' : 'text-emerald-700'} font-black text-[10px] uppercase`}>
+                {fileType === 'pdf' ? 'PDF Anexado' : 'Imagem Pronta'}
+              </span>
             </div>
           ) : (
             <div className="text-center p-4">
-              <i className="fas fa-camera text-slate-400 text-3xl mb-2"></i>
-              <p className="text-slate-500 text-[10px] font-bold uppercase">Anexar ou Tirar Foto</p>
+              <i className="fas fa-file-upload text-slate-400 text-3xl mb-2"></i>
+              <p className="text-slate-500 text-[10px] font-bold uppercase">Foto ou PDF</p>
             </div>
           )}
         </label>

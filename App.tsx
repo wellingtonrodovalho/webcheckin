@@ -16,7 +16,7 @@ const App: React.FC = () => {
       startDate: '',
       endDate: '',
       guestCount: 1,
-      reasonForVisit: 'Turismo',
+      reasonForVisit: 'Férias/Lazer',
       propertyId: '3',
       totalValue: 0,
       securityDepositValue: 0,
@@ -145,6 +145,20 @@ const App: React.FC = () => {
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Imóvel da Reserva</label>
                   <select name="propertyId" value={formData.reservation.propertyId} onChange={handleReservationChange} className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 outline-none focus:border-blue-500 transition-all appearance-none cursor-pointer">
                     {PROPERTIES.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Motivo da Viagem</label>
+                  <select name="reasonForVisit" value={formData.reservation.reasonForVisit} onChange={handleReservationChange} className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 outline-none focus:border-blue-500 transition-all appearance-none cursor-pointer">
+                    <option value="Férias/Lazer">Férias/Lazer (Leisure/Vacation)</option>
+                    <option value="Negócios">Negócios (Business)</option>
+                    <option value="Congresso/Feira">Congresso/Feira (Convention/Fair)</option>
+                    <option value="Estudos/Cursos">Estudos/Cursos (Studies/Courses)</option>
+                    <option value="Saúde">Saúde (Health)</option>
+                    <option value="Parentes/Amigos">Parentes/Amigos (Relatives/Friends)</option>
+                    <option value="Religião">Religião (Religion)</option>
+                    <option value="Outro">Outro (Other)</option>
                   </select>
                 </div>
 

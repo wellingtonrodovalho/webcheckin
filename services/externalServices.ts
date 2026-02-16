@@ -16,9 +16,12 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
   const payload = {
     "Data de Envio": new Date().toLocaleString('pt-BR'),
     "Imóvel": data.propertyDetails?.name || 'N/A',
+    "Endereço do Imóvel": data.propertyDetails?.address || 'N/A',
     "Proprietário": data.propertyDetails?.ownerName || 'N/A',
+    "CPF do Proprietário": data.propertyDetails?.ownerCpf || 'N/A',
     "Check-in": data.reservation.startDate,
     "Check-out": data.reservation.endDate,
+    "Motivo da Viagem": data.reservation.reasonForVisit,
     "Hóspedes": data.reservation.guestCount,
     "Valor Total": formatCurrency(data.reservation.totalValue),
     "Caução": formatCurrency(data.reservation.securityDepositValue || 0),

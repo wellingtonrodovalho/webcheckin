@@ -1,6 +1,6 @@
 
 /**
- * GOOGLE APPS SCRIPT - VERSÃO MULTI-FORMATO (IMG + PDF)
+ * GOOGLE APPS SCRIPT - VERSÃO COM AUTO-EXPANSÃO DE COLUNAS
  * Wellington Rodovalho - Web Check-in
  */
 
@@ -32,25 +32,40 @@ function doPost(e) {
 
     logDebug("Recebido cadastro de: " + (data["Nome Titular"] || "Hóspede"));
 
-    // 1. Pasta
+    // 1. Gerenciar Pasta de Arquivos
     var folderName = "Arquivos_Checkin";
     var folders = DriveApp.getFoldersByName(folderName);
     var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
 
-    // 2. Colunas
-    var headers = sheet.getLastColumn() > 0 ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] : [];
-    if (headers.length === 0) {
-      headers = Object.keys(data);
-      sheet.appendRow(headers);
+    // 2. Gerenciar Cabeçalhos (Auto-Expansão)
+    // Pega os cabeçalhos atuais da linha 1
+    var currentHeaders = sheet.getLastColumn() > 0 
+      ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] 
+      : [];
+    
+    var payloadKeys = Object.keys(data);
+    
+    // Identifica chaves no payload que ainda não são colunas na planilha
+    var newKeys = payloadKeys.filter(function(key) {
+      return currentHeaders.indexOf(key) === -1;
+    });
+
+    // Se houver campos novos, adiciona como novas colunas
+    if (newKeys.length > 0) {
+      var nextCol = currentHeaders.length + 1;
+      sheet.getRange(1, nextCol, 1, newKeys.length).setValues([newKeys]);
+      // Atualiza a lista de cabeçalhos local para mapear a linha corretamente
+      currentHeaders = currentHeaders.concat(newKeys);
     }
 
     var attachments = [];
     var emailBody = "Novo cadastro recebido.\n\n";
 
-    var row = headers.map(function(h) {
+    // 3. Mapear dados para as colunas
+    var row = currentHeaders.map(function(h) {
       var val = data[h] || "";
       
-      // Detecta Base64 (Imagens ou PDF)
+      // Detecta Base64 (Imagens ou PDF) para salvar no Drive
       if (typeof val === 'string' && val.indexOf('data:') === 0) {
         try {
           var parts = val.split(',');
@@ -58,7 +73,6 @@ function doPost(e) {
           var contentType = header.split(':')[1].split(';')[0];
           var base64Data = parts[1];
           
-          // Define a extensão baseada no tipo de conteúdo
           var extension = ".jpg";
           if (contentType === "application/pdf") {
             extension = ".pdf";
@@ -85,13 +99,14 @@ function doPost(e) {
       return val;
     });
 
+    // Adiciona a linha de dados
     sheet.appendRow(row);
     
-    // 3. E-mail de Notificação
+    // 4. E-mail de Notificação
     try {
       MailApp.sendEmail({
         to: EMAIL_DESTINATARIO,
-        subject: "CHECK-IN MULTIMÍDIA: " + (data["Nome Titular"] || "Novo Hóspede"),
+        subject: "CHECK-IN ATUALIZADO: " + (data["Nome Titular"] || "Novo Hóspede"),
         body: emailBody,
         attachments: attachments
       });

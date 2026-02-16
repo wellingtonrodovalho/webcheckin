@@ -159,17 +159,22 @@ const App: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                    <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                    <label className="text-[10px] font-black text-blue-600 uppercase mb-1 block">Número de Hóspedes</label>
+                    <label className="text-[10px] font-black text-blue-600 uppercase mb-1 block">Hóspedes</label>
                     <select name="guestCount" value={formData.reservation.guestCount} onChange={handleReservationChange} className="bg-transparent border-none p-0 focus:ring-0 font-black text-blue-800 text-xl w-full">
                       {Array.from({ length: selectedProperty.capacity }).map((_, i) => <option key={i+1} value={i+1}>{i+1} Pessoa(s)</option>)}
                     </select>
                   </div>
 
                   <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-                    <label className="text-[10px] font-black text-emerald-600 uppercase mb-1 block">Valor Total da Reserva (R$)</label>
+                    <label className="text-[10px] font-black text-emerald-600 uppercase mb-1 block">Valor Total (R$)</label>
                     <input type="number" name="totalValue" value={formData.reservation.totalValue || ''} onChange={handleReservationChange} placeholder="0,00" className="bg-transparent border-none p-0 focus:ring-0 font-black text-emerald-800 text-xl w-full" />
+                  </div>
+
+                  <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                    <label className="text-[10px] font-black text-amber-600 uppercase mb-1 block">Caução (R$)</label>
+                    <input type="number" name="securityDepositValue" value={formData.reservation.securityDepositValue || ''} onChange={handleReservationChange} placeholder="0,00" className="bg-transparent border-none p-0 focus:ring-0 font-black text-amber-800 text-xl w-full" />
                   </div>
                 </div>
               </div>

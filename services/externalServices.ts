@@ -21,6 +21,7 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
     "Check-out": data.reservation.endDate,
     "Hóspedes": data.reservation.guestCount,
     "Valor Total": formatCurrency(data.reservation.totalValue),
+    "Caução": formatCurrency(data.reservation.securityDepositValue || 0),
     "Nome Titular": data.mainGuest.fullName,
     "CPF Titular": data.mainGuest.cpf,
     "RG Titular": data.mainGuest.rg,

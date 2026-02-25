@@ -332,6 +332,30 @@ const App: React.FC = () => {
           )}
         </div>
       </main>
+
+      <footer className="w-full max-w-2xl mx-auto px-4 py-8 mt-auto border-t border-slate-200">
+        <div className="text-center space-y-2">
+          <p className="text-slate-800 font-black text-sm uppercase">Corretor de Imóveis: WELLINGTON RODOVALHO FONSECA</p>
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+            <span>CAEPF: 269.462.701/001-49</span>
+            <span>CRECI: CRECI-GO 42695</span>
+            <span>CNAI: 54826</span>
+          </div>
+          <div className="pt-4 flex flex-col items-center gap-2">
+            <a href="https://www.alugagoias.com.br" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold text-xs hover:underline flex items-center gap-2">
+              <i className="fas fa-globe"></i> www.alugagoias.com.br
+            </a>
+            <div className="flex gap-6">
+              <a href="https://wa.me/5562985451980" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold text-xs hover:underline flex items-center gap-2">
+                <i className="fab fa-whatsapp"></i> 62 98545-1980
+              </a>
+              <a href="mailto:contato@alugagoias.com.br" className="text-slate-600 font-bold text-xs hover:underline flex items-center gap-2">
+                <i className="fas fa-envelope"></i> contato@alugagoias.com.br
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

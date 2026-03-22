@@ -346,8 +346,8 @@ const App: React.FC = () => {
               <i className="fas fa-globe"></i> www.alugagoias.com.br
             </a>
             <div className="flex gap-6">
-              <a href="https://wa.me/5562985451980" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold text-xs hover:underline flex items-center gap-2">
-                <i className="fab fa-whatsapp"></i> 62 98545-1980
+              <a href="https://wa.me/5562991514568" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold text-xs hover:underline flex items-center gap-2">
+                <i className="fab fa-whatsapp"></i> 62 99151-4568
               </a>
               <a href="mailto:contato@alugagoias.com.br" className="text-slate-600 font-bold text-xs hover:underline flex items-center gap-2">
                 <i className="fas fa-envelope"></i> contato@alugagoias.com.br

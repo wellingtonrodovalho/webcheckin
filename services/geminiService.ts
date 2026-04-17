@@ -14,6 +14,10 @@ export const generateContract = async (data: FullFormData): Promise<string> => {
         : "CLÁUSULA SOBRE ANIMAIS: O imóvel permite pets, mas o locatário informou que não trará nenhum.")
     : "CLÁUSULA SOBRE ANIMAIS: É proibida a permanência de animais no imóvel.";
 
+  const vehicleClause = data.reservation.hasVehicle 
+    ? `VEÍCULO: O locatário utilizará veículo próprio: Marca: ${data.reservation.vehicleBrand}, Modelo: ${data.reservation.vehicleModel}, Cor: ${data.reservation.vehicleColor}, Placa: ${data.reservation.vehiclePlate}.` 
+    : "VEÍCULO: O locatário declarou que não utilizará veículo próprio.";
+
   const prompt = `
     Escreva um CONTRATO DE LOCAÇÃO POR TEMPORADA formal.
     LOCADOR: ${property.ownerName}, CPF: ${property.ownerCpf}, ${property.ownerStatus}, ${property.ownerProfession}.
@@ -24,6 +28,7 @@ export const generateContract = async (data: FullFormData): Promise<string> => {
     HÓSPEDES: ${data.reservation.guestCount} pessoa(s). Acompanhantes: ${data.companions.map(c => c.name).join(', ') || 'Nenhum'}.
     
     ${petClause}
+    ${vehicleClause}
     
     REGRAS:
     - Retorne APENAS o texto do contrato.

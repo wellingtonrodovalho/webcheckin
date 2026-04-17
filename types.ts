@@ -14,7 +14,7 @@ export interface Property {
 export const PROPERTIES: Property[] = [
   {
     id: "1",
-    name: "Resort do LAGO - Caldas Novas",
+    name: "Resort do Lago 207C 1 quarto(até 5 pessoas)",
     address: "Av. Caminho do Lago, Gleba 10D, Unidade 207 C, Caldas Novas-GO, 75.680-001",
     ownerName: "Rosiani Ipolita Leão",
     ownerCpf: "995.383.856-91",
@@ -25,7 +25,7 @@ export const PROPERTIES: Property[] = [
   },
   {
     id: "2",
-    name: "Resort do LAGO - Caldas Novas",
+    name: "Resort do Lago 408D 2 quartos(até 8 pessoas)",
     address: "Av. Caminho do Lago, Gleba 10D, Unidade 408 D, Caldas Novas-GO, 75.680-001",
     ownerName: "Rosiani Ipolita Leão",
     ownerCpf: "995.383.856-91",
@@ -36,7 +36,7 @@ export const PROPERTIES: Property[] = [
   },
   {
     id: "3",
-    name: "Flat no Crystal Place, a 6 min do Flamboyant",
+    name: "Flat no Crystal Place, a 6 min do Flamboyant (1609)",
     address: "Avenida Edmundo P. de Abreu, 31, Apartamento 1609, Setor Pedro Ludovico, Goiânia-GO, 74823-030",
     ownerName: "Wellington Rodovalho Fonseca",
     ownerCpf: "269.462.701-34",
@@ -88,6 +88,17 @@ export const PROPERTIES: Property[] = [
     ownerProfession: "Corretor de Imóveis",
     petAllowed: false,
     capacity: 6
+  },
+  {
+    id: "8",
+    name: "Crystal Place: Flat Moderno c/ Manobrista e Wi-Fi(1701)",
+    address: "Avenida Edmundo P. de Abreu, 31, Apartamento 1701, Setor Pedro Ludovico, Goiânia-GO, 74823-030",
+    ownerName: "Wellington Rodovalho Fonseca",
+    ownerCpf: "269.462.701-34",
+    ownerStatus: "Casado",
+    ownerProfession: "Corretor de Imóveis",
+    petAllowed: true,
+    capacity: 4
   }
 ];
 
@@ -114,7 +125,10 @@ export interface ReservationData {
   endDate: string;
   guestCount: number;
   reasonForVisit: string;
+  hasVehicle: boolean;
+  vehicleBrand?: string;
   vehicleModel?: string;
+  vehicleColor?: string;
   vehiclePlate?: string;
   propertyId: string;
   totalValue: number;

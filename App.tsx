@@ -17,6 +17,11 @@ const App: React.FC = () => {
       endDate: '',
       guestCount: 1,
       reasonForVisit: 'Férias/Lazer',
+      hasVehicle: false,
+      vehicleBrand: '',
+      vehicleModel: '',
+      vehicleColor: '',
+      vehiclePlate: '',
       propertyId: '3',
       totalValue: 0,
       securityDepositValue: 0,
@@ -190,6 +195,40 @@ const App: React.FC = () => {
                     <label className="text-[10px] font-black text-amber-600 uppercase mb-1 block">Caução (R$)</label>
                     <input type="number" name="securityDepositValue" value={formData.reservation.securityDepositValue || ''} onChange={handleReservationChange} placeholder="0,00" className="bg-transparent border-none p-0 focus:ring-0 font-black text-amber-800 text-xl w-full" />
                   </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      name="hasVehicle" 
+                      checked={formData.reservation.hasVehicle} 
+                      onChange={handleReservationChange} 
+                      className="w-5 h-5 rounded text-blue-600 focus:ring-blue-500" 
+                    />
+                    <span className="text-sm font-bold text-slate-700">Virão de veículo próprio?</span>
+                  </label>
+
+                  {formData.reservation.hasVehicle && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 animate-in fade-in slide-in-from-top-2">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Marca</label>
+                        <input name="vehicleBrand" value={formData.reservation.vehicleBrand} onChange={handleReservationChange} placeholder="Ex: Toyota" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Modelo</label>
+                        <input name="vehicleModel" value={formData.reservation.vehicleModel} onChange={handleReservationChange} placeholder="Ex: Corolla" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Cor</label>
+                        <input name="vehicleColor" value={formData.reservation.vehicleColor} onChange={handleReservationChange} placeholder="Ex: Prata" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Placa</label>
+                        <input name="vehiclePlate" value={formData.reservation.vehiclePlate} onChange={handleReservationChange} placeholder="ABC-1234" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold uppercase" />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <button onClick={nextStep} disabled={!formData.reservation.startDate || formData.reservation.totalValue <= 0} className="w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 active:scale-[0.98] transition-all">CONTINUAR</button>

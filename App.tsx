@@ -6,6 +6,7 @@ import StepIndicator from './components/StepIndicator';
 import FileUpload from './components/FileUpload';
 import SelfieCapture from './components/SelfieCapture';
 import Logo from './components/Logo';
+import AIAssistant from './components/AIAssistant';
 
 const App: React.FC = () => {
   const [step, setStep] = useState<FormStep>(FormStep.CONSENT);
@@ -395,6 +396,7 @@ const App: React.FC = () => {
           </div>
         </div>
       </footer>
+      <AIAssistant currentContext={`O usuário está no passo ${step} do formulário de check-in. O imóvel selecionado é ${selectedProperty.name}.`} />
     </div>
   );
 };

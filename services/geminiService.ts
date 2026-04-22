@@ -57,3 +57,35 @@ export const generateContract = async (data: FullFormData): Promise<string> => {
     throw new Error("Erro na comunicação com a IA");
   }
 };
+
+export const getAIHelp = async (message: string, currentContext: string): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  const prompt = `
+    Você é um assistente virtual prestativo para o sistema de check-in do corretor de imóveis Wellington Rodovalho Fonseca.
+    O sistema ajuda hóspedes a preencherem seus dados para locação de imóveis em Goiânia e Caldas Novas.
+    
+    Contexto atual do formulário: ${currentContext}
+    
+    Mensagem do usuário: ${message}
+    
+    Diretrizes:
+    - Seja cordial e direto.
+    - Ajude com dúvidas sobre o preenchimento dos campos (CPF, RG, endereço, pets, veículos).
+    - Se o usuário perguntar sobre os imóveis, mencione que temos opções no Resort do Lago, Crystal Place, Studio A e B no Bueno, etc.
+    - Responda em português.
+    - Mantenha a resposta concisa.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+    });
+
+    return response.text || "Desculpe, não consegui processar seu pedido agora.";
+  } catch (err) {
+    console.error("Erro no assistente Gemini:", err);
+    return "Desculpe, estou com dificuldades técnicas no momento.";
+  }
+};

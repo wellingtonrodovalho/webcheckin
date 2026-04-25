@@ -146,6 +146,9 @@ export interface MainGuest {
   address: string;
   maritalStatus: string;
   profession: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelationship?: string;
   documentFile?: string; // Base64
   selfieFile?: string; // Base64 for LGPD/Identity verification
 }

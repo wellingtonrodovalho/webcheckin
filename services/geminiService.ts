@@ -26,6 +26,7 @@ export const generateContract = async (data: FullFormData): Promise<string> => {
     PERÍODO: De ${data.reservation.startDate} a ${data.reservation.endDate}.
     VALOR: R$ ${data.reservation.totalValue.toFixed(2)}.
     HÓSPEDES: ${data.reservation.guestCount} pessoa(s). Acompanhantes: ${data.companions.map(c => c.name).join(', ') || 'Nenhum'}.
+    CONTATO DE EMERGÊNCIA: ${data.mainGuest.emergencyContactName || 'N/A'}, Tel: ${data.mainGuest.emergencyContactPhone || 'N/A'}, Parentesco: ${data.mainGuest.emergencyContactRelationship || 'N/A'}.
     
     ${petClause}
     ${vehicleClause}

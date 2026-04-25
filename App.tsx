@@ -42,7 +42,10 @@ const App: React.FC = () => {
       phone: '',
       address: '',
       maritalStatus: '',
-      profession: ''
+      profession: '',
+      emergencyContactName: '',
+      emergencyContactPhone: '',
+      emergencyContactRelationship: ''
     },
     companions: [],
     lgpdConsent: false
@@ -272,6 +275,19 @@ const App: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <FileUpload id="doc_main" label="Doc. Identidade (Frente)" onFileSelect={handleUpload('main')} />
                   <SelfieCapture label="Selfie do Titular" onCapture={(base64) => setFormData(prev => ({ ...prev, mainGuest: { ...prev.mainGuest, selfieFile: base64 } }))} />
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <i className="fas fa-phone-alt"></i> Contato de Emergência
+                  </h3>
+                  <div className="grid gap-3">
+                    <input name="emergencyContactName" value={formData.mainGuest.emergencyContactName} onChange={handleMainGuestChange} placeholder="NOME DO CONTATO" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-sm uppercase" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <input name="emergencyContactPhone" value={formData.mainGuest.emergencyContactPhone} onChange={handleMainGuestChange} placeholder="CELULAR / WHATSAPP" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-sm" />
+                      <input name="emergencyContactRelationship" value={formData.mainGuest.emergencyContactRelationship} onChange={handleMainGuestChange} placeholder="PARENTESCO" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-sm uppercase" />
+                    </div>
+                  </div>
                 </div>
               </div>
 

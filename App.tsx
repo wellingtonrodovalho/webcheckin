@@ -83,7 +83,7 @@ const App: React.FC = () => {
     setFormData(prev => ({ ...prev, pet: { ...prev.pet, hasPet } }));
   };
 
-  const handlePetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePetChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, pet: { ...prev.pet, [name]: value } }));
   };
@@ -149,25 +149,38 @@ const App: React.FC = () => {
             <div className="space-y-6 animate-in slide-in-from-right-4">
               <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight border-b pb-2">1. Dados da Hospedagem</h2>
               <div className="grid gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Imóvel da Reserva</label>
-                  <select name="propertyId" value={formData.reservation.propertyId} onChange={handleReservationChange} className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 outline-none focus:border-blue-500 transition-all appearance-none cursor-pointer">
+                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 mb-2">
+                  <label className="text-[10px] font-black text-blue-600 uppercase mb-1 block tracking-widest">Imóvel da Reserva</label>
+                  <p className="text-[9px] text-blue-400 font-bold mb-2 italic">Selecione o imóvel conforme sua reserva</p>
+                  <select 
+                    name="propertyId" 
+                    value={formData.reservation.propertyId} 
+                    onChange={handleReservationChange} 
+                    className="bg-transparent border-none p-0 focus:ring-0 font-black text-blue-800 text-sm w-full cursor-pointer uppercase"
+                  >
                     {PROPERTIES.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Motivo da Viagem</label>
-                  <select name="reasonForVisit" value={formData.reservation.reasonForVisit} onChange={handleReservationChange} className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 outline-none focus:border-blue-500 transition-all appearance-none cursor-pointer">
-                    <option value="Férias/Lazer">Férias/Lazer (Leisure/Vacation)</option>
-                    <option value="Negócios">Negócios (Business)</option>
-                    <option value="Congresso/Feira">Congresso/Feira (Convention/Fair)</option>
-                    <option value="Estudos/Cursos">Estudos/Cursos (Studies/Courses)</option>
-                    <option value="Saúde">Saúde (Health)</option>
-                    <option value="Parentes/Amigos">Parentes/Amigos (Relatives/Friends)</option>
-                    <option value="Religião">Religião (Religion)</option>
-                    <option value="Outro">Outro (Other)</option>
-                  </select>
+                  <p className="text-[9px] text-blue-600 font-bold ml-1 mb-2 italic">* Clique no motivo da sua visita</p>
+                  <div className="flex flex-wrap gap-2">
+                    {['Férias/Lazer', 'Negócios', 'Saúde', 'Parentes/Amigos', 'Eventos', 'Outro'].map(opt => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, reservation: { ...prev.reservation, reasonForVisit: opt } }))}
+                        className={`px-4 py-2 rounded-xl border-2 text-[10px] font-bold uppercase transition-all ${
+                          formData.reservation.reasonForVisit === opt 
+                            ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm' 
+                            : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -249,15 +262,21 @@ const App: React.FC = () => {
                   <input name="rg" value={formData.mainGuest.rg} onChange={handleMainGuestChange} placeholder="RG" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <select name="maritalStatus" value={formData.mainGuest.maritalStatus} onChange={handleMainGuestChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold">
-                    <option value="">ESTADO CIVIL</option>
-                    <option value="Solteiro(a)">Solteiro(a)</option>
-                    <option value="Casado(a)">Casado(a)</option>
-                    <option value="União Estável">União Estável</option>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                  <label className="text-[10px] font-black text-slate-400 uppercase mb-1 block tracking-widest">Estado Civil</label>
+                  <select 
+                    name="maritalStatus" 
+                    value={formData.mainGuest.maritalStatus} 
+                    onChange={handleMainGuestChange} 
+                    className="bg-transparent border-none p-0 focus:ring-0 font-black text-slate-700 text-sm w-full cursor-pointer"
+                  >
+                    <option value="">SELECIONE O ESTADO CIVIL</option>
+                    {['Solteiro(a)', 'Casado(a)', 'União Estável', 'Divorciado(a)', 'Viúvo(a)'].map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
                   </select>
-                  <input name="profession" value={formData.mainGuest.profession} onChange={handleMainGuestChange} placeholder="PROFISSÃO" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
                 </div>
+                <input name="profession" value={formData.mainGuest.profession} onChange={handleMainGuestChange} placeholder="PROFISSÃO" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold uppercase" />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input name="email" value={formData.mainGuest.email} onChange={handleMainGuestChange} placeholder="E-MAIL" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
@@ -285,7 +304,20 @@ const App: React.FC = () => {
                     <input name="emergencyContactName" value={formData.mainGuest.emergencyContactName} onChange={handleMainGuestChange} placeholder="NOME DO CONTATO" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-sm uppercase" />
                     <div className="grid grid-cols-2 gap-3">
                       <input name="emergencyContactPhone" value={formData.mainGuest.emergencyContactPhone} onChange={handleMainGuestChange} placeholder="CELULAR / WHATSAPP" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-sm" />
-                      <input name="emergencyContactRelationship" value={formData.mainGuest.emergencyContactRelationship} onChange={handleMainGuestChange} placeholder="PARENTESCO" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-sm uppercase" />
+                    <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                      <label className="text-[9px] font-black text-orange-600 uppercase mb-1 block tracking-widest">Parentesco</label>
+                      <select 
+                        name="emergencyContactRelationship" 
+                        value={formData.mainGuest.emergencyContactRelationship} 
+                        onChange={handleMainGuestChange} 
+                        className="bg-transparent border-none p-0 focus:ring-0 font-black text-orange-800 text-xs w-full cursor-pointer"
+                      >
+                        <option value="">SELECIONE</option>
+                        {['Cônjuge', 'Filho(a)', 'Pai/Mãe', 'Irmão/Irmã', 'Amigo(a)', 'Outro'].map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
                     </div>
                   </div>
                 </div>
@@ -335,9 +367,22 @@ const App: React.FC = () => {
 
               {formData.pet.hasPet && (
                 <div className="space-y-4 p-6 bg-orange-50/50 border border-orange-100 rounded-3xl animate-in zoom-in-95">
+                  <div className="p-4 bg-orange-100/50 rounded-2xl border border-orange-200">
+                    <label className="text-[10px] font-black text-orange-600 uppercase mb-1 block tracking-widest">Tipo de Pet</label>
+                    <select 
+                      name="species" 
+                      value={formData.pet.species} 
+                      onChange={handlePetChange} 
+                      className="bg-transparent border-none p-0 focus:ring-0 font-black text-orange-800 text-sm w-full cursor-pointer uppercase"
+                    >
+                      {['Cão', 'Gato', 'Aves', 'Outros'].map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <input name="name" value={formData.pet.name} onChange={handlePetChange} placeholder="NOME DO PET" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold uppercase" />
-                    <input name="breed" value={formData.pet.breed} onChange={handlePetChange} placeholder="RAÇA / ESPÉCIE" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold uppercase" />
+                    <input name="breed" value={formData.pet.breed} onChange={handlePetChange} placeholder="RAÇA" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold uppercase" />
                   </div>
                   <FileUpload id="pet_vac" label="Carteira de Vacinação do Pet" onFileSelect={handleUpload('pet')} />
                 </div>

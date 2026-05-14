@@ -38,6 +38,9 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
     ["Nome", data.mainGuest.fullName],
     ["CPF", data.mainGuest.cpf],
     ["RG", data.mainGuest.rg],
+    ["Nacionalidade", data.mainGuest.nationality],
+    ["Estado Civil", data.mainGuest.maritalStatus],
+    ["Profissão", data.mainGuest.profession],
     ["E-mail", data.mainGuest.email],
     ["Telefone", data.mainGuest.phone],
     ["Endereço", data.mainGuest.address],
@@ -56,7 +59,8 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
     ["PET", ""],
     ["Possui Pet?", data.pet.hasPet ? "Sim" : "Não"],
     ["Nome do Pet", data.pet.name || "-"],
-    ["Espécie/Raça", `${data.pet.species || "-"} / ${data.pet.breed || "-"}`]
+    ["Espécie/Raça", `${data.pet.species || "-"} / ${data.pet.breed || "-"}`],
+    ["Idade/Peso/Tamanho", `${data.pet.age || "-"} / ${data.pet.weight || "-"} / ${data.pet.size || "-"}`]
   ];
 
   if (data.companions.length > 0) {
@@ -76,11 +80,67 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
     styles: { fontSize: 9 }
   });
 
-  const pdfBase64 = doc.output('datauristring');
+  const pdfOutput = doc.output('datauristring');
+  const pdfBase64 = pdfOutput.split(',')[1]; // Strip data:application/pdf;base64,
 
-  // 2. Preparar Payload para Planilha
+  // 3. Preparar corpo do email formatado para facilitar o Apps Script
+  const emailBody = `
+RELATÓRIO DE CHECK-IN - ${data.propertyDetails?.name || 'N/A'}
+--------------------------------------------------
+DADOS DO IMÓVEL:
+- Nome: ${data.propertyDetails?.name || 'N/A'}
+- Endereço: ${data.propertyDetails?.address || 'N/A'}
+
+RESERVA:
+- Check-in: ${data.reservation.startDate}
+- Check-out: ${data.reservation.endDate}
+- Hóspedes: ${data.reservation.guestCount}
+- Motivo: ${data.reservation.reasonForVisit}
+- Valor Total: ${formatCurrency(data.reservation.totalValue)}
+- Caução: ${formatCurrency(data.reservation.securityDepositValue || 0)}
+
+TITULAR:
+- Nome: ${data.mainGuest.fullName}
+- CPF: ${data.mainGuest.cpf}
+- RG: ${data.mainGuest.rg}
+- Nacionalidade: ${data.mainGuest.nationality}
+- Estado Civil: ${data.mainGuest.maritalStatus}
+- Profissão: ${data.mainGuest.profession}
+- Email: ${data.mainGuest.email}
+- Telefone: ${data.mainGuest.phone}
+- Endereço: ${data.mainGuest.address}
+
+CONTATO DE EMERGÊNCIA:
+- Nome: ${data.mainGuest.emergencyContactName || 'N/A'}
+- Telefone: ${data.mainGuest.emergencyContactPhone || 'N/A'}
+- Parentesco: ${data.mainGuest.emergencyContactRelationship || 'N/A'}
+
+VEÍCULO:
+- Possui: ${data.reservation.hasVehicle ? 'Sim' : 'Não'}
+- Marca: ${data.reservation.vehicleBrand || 'N/A'}
+- Modelo: ${data.reservation.vehicleModel || 'N/A'}
+- Placa: ${data.reservation.vehiclePlate || 'N/A'}
+
+PET:
+- Possui: ${data.pet.hasPet ? 'Sim' : 'Não'}
+- Nome: ${data.pet.name || 'N/A'}
+- Espécie/Raça: ${data.pet.species || 'N/A'} / ${data.pet.breed || 'N/A'}
+- Idade/Peso/Tamanho: ${data.pet.age || 'N/A'} / ${data.pet.weight || 'N/A'} / ${data.pet.size || 'N/A'}
+
+ACOMPANHANTES:
+${data.companions.length > 0 
+  ? data.companions.map((c, i) => `${i+1}. ${c.name} (Doc: ${c.documentNumber})`).join('\n')
+  : 'Nenhum'}
+--------------------------------------------------
+`.trim();
+
+  // 4. Preparar Payload para Planilha e Email
   const payload = {
     "Data de Envio": new Date().toLocaleString('pt-BR'),
+    "Destinatario_Email": "wellington.rodovalho@gmail.com",
+    "Assunto_Email": `Novo Check-in: ${data.mainGuest.fullName} - ${data.propertyDetails?.name}`,
+    "Corpo_Email": emailBody,
+    "PDF_Nome": `Relatorio_${data.mainGuest.fullName.replace(/\s+/g, '_')}.pdf`,
     "Imóvel": data.propertyDetails?.name || 'N/A',
     "Endereço do Imóvel": data.propertyDetails?.address || 'N/A',
     "Proprietário": data.propertyDetails?.ownerName || 'N/A',
@@ -99,6 +159,9 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
     "Nome Titular": data.mainGuest.fullName,
     "CPF Titular": data.mainGuest.cpf,
     "RG Titular": data.mainGuest.rg,
+    "Nacionalidade Titular": data.mainGuest.nationality,
+    "Estado Civil Titular": data.mainGuest.maritalStatus,
+    "Profissão Titular": data.mainGuest.profession,
     "E-mail": data.mainGuest.email,
     "Telefone": data.mainGuest.phone,
     "Endereço": data.mainGuest.address,
@@ -109,6 +172,12 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
       ? data.companions.map((c, i) => `${i+1}: ${c.name} (Doc: ${c.documentNumber})`).join(' | ')
       : 'Nenhum',
     "Possui Pet?": data.pet.hasPet ? 'Sim' : 'Não',
+    "Pet: Nome": data.pet.name || 'N/A',
+    "Pet: Raça": data.pet.breed || 'N/A',
+    "Pet: Espécie": data.pet.species || 'N/A',
+    "Pet: Peso": data.pet.weight || 'N/A',
+    "Pet: Idade": data.pet.age || 'N/A',
+    "Pet: Tamanho": data.pet.size || 'N/A',
     "Relatório_PDF": pdfBase64,
     "Doc: Frente": data.mainGuest.documentFile || '',
     "Foto: Selfie": data.mainGuest.selfieFile || '',

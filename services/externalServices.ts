@@ -168,7 +168,22 @@ ${data.companions.length > 0
     "Emergência: Nome": data.mainGuest.emergencyContactName || 'N/A',
     "Emergência: Telefone": data.mainGuest.emergencyContactPhone || 'N/A',
     "Emergência: Parentesco": data.mainGuest.emergencyContactRelationship || 'N/A',
-    "Acompanhantes": data.companions.length > 0 
+    // Colunas individuais para acompanhantes
+    "Acompanhante 1 Nome": data.companions[0]?.name || '',
+    "Acompanhante 1 Documento": data.companions[0]?.documentNumber || '',
+    "Acompanhante 2 Nome": data.companions[1]?.name || '',
+    "Acompanhante 2 Documento": data.companions[1]?.documentNumber || '',
+    "Acompanhante 3 Nome": data.companions[2]?.name || '',
+    "Acompanhante 3 Documento": data.companions[2]?.documentNumber || '',
+    "Acompanhante 4 Nome": data.companions[3]?.name || '',
+    "Acompanhante 4 Documento": data.companions[3]?.documentNumber || '',
+    "Acompanhante 5 Nome": data.companions[4]?.name || '',
+    "Acompanhante 5 Documento": data.companions[4]?.documentNumber || '',
+    "Acompanhante 6 Nome": data.companions[5]?.name || '',
+    "Acompanhante 6 Documento": data.companions[5]?.documentNumber || '',
+    "Acompanhante 7 Nome": data.companions[6]?.name || '',
+    "Acompanhante 7 Documento": data.companions[6]?.documentNumber || '',
+    "Acompanhantes_Resumo": data.companions.length > 0 
       ? data.companions.map((c, i) => `${i+1}: ${c.name} (Doc: ${c.documentNumber})`).join(' | ')
       : 'Nenhum',
     "Possui Pet?": data.pet.hasPet ? 'Sim' : 'Não',

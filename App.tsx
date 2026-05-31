@@ -52,14 +52,27 @@ const App: React.FC = () => {
   });
 
   const selectedProperty = PROPERTIES.find(p => p.id === formData.reservation.propertyId) || PROPERTIES[0];
-  const isPetAllowedProperty = formData.reservation.propertyId === '3' || formData.reservation.propertyId === '4';
+  const isPetAllowedProperty = selectedProperty.petAllowed;
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [step]);
 
-  const nextStep = () => setStep(prev => prev + 1);
-  const prevStep = () => setStep(prev => prev - 1);
+  const nextStep = () => {
+    if (step === FormStep.MAIN_GUEST && !isPetAllowedProperty) {
+      setStep(FormStep.COMPANIONS);
+    } else {
+      setStep(prev => prev + 1);
+    }
+  };
+
+  const prevStep = () => {
+    if (step === FormStep.COMPANIONS && !isPetAllowedProperty) {
+      setStep(FormStep.MAIN_GUEST);
+    } else {
+      setStep(prev => prev - 1);
+    }
+  };
 
   const handleReservationChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
@@ -74,7 +87,8 @@ const App: React.FC = () => {
       
       let nextPet = prev.pet;
       if (name === 'propertyId') {
-        const isPetAllowed = value === '3' || value === '4';
+        const targetProp = PROPERTIES.find(p => p.id === value);
+        const isPetAllowed = targetProp ? targetProp.petAllowed : false;
         if (!isPetAllowed) {
           nextPet = { ...prev.pet, hasPet: false };
         }
@@ -163,7 +177,7 @@ const App: React.FC = () => {
       </header>
 
       <main className="flex-1 w-full max-w-2xl mx-auto px-4 mt-6">
-        {step > FormStep.CONSENT && step !== FormStep.SUCCESS && <StepIndicator currentStep={step} />}
+        {step > FormStep.CONSENT && step !== FormStep.SUCCESS && <StepIndicator currentStep={step} petAllowed={isPetAllowedProperty} />}
 
         <div className="bg-white rounded-3xl shadow-xl p-6 sm:p-10">
           
@@ -355,9 +369,9 @@ const App: React.FC = () => {
                 <button 
                   onClick={nextStep} 
                   disabled={!formData.mainGuest.fullName || !formData.mainGuest.cpf || !formData.mainGuest.phone || !formData.mainGuest.documentFile || !formData.mainGuest.selfieFile} 
-                  className="flex-[2] py-4 bg-blue-600 text-white font-black rounded-xl disabled:opacity-30 transition-all"
+                  className="flex-[2] py-4 bg-blue-600 text-white font-black rounded-xl disabled:opacity-30 transition-all animate-none"
                 >
-                  PRÓXIMO: PET
+                  {isPetAllowedProperty ? 'PRÓXIMO: PET' : 'PRÓXIMO: HÓSPEDES'}
                 </button>
               </div>
             </div>

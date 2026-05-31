@@ -4,17 +4,18 @@ import { FormStep } from '../types';
 
 interface StepIndicatorProps {
   currentStep: FormStep;
+  petAllowed?: boolean;
 }
 
-const steps = [
-  { id: FormStep.RESERVATION, label: 'Reserva', icon: 'fa-calendar-check' },
-  { id: FormStep.MAIN_GUEST, label: 'Titular', icon: 'fa-user' },
-  { id: FormStep.PET_INFO, label: 'Pet', icon: 'fa-paw' },
-  { id: FormStep.COMPANIONS, label: 'Hóspedes', icon: 'fa-users' },
-  { id: FormStep.SUCCESS, label: 'Fim', icon: 'fa-check' },
-];
+const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, petAllowed = true }) => {
+  const steps = [
+    { id: FormStep.RESERVATION, label: 'Reserva', icon: 'fa-calendar-check' },
+    { id: FormStep.MAIN_GUEST, label: 'Titular', icon: 'fa-user' },
+    ...(petAllowed ? [{ id: FormStep.PET_INFO, label: 'Pet', icon: 'fa-paw' }] : []),
+    { id: FormStep.COMPANIONS, label: 'Hóspedes', icon: 'fa-users' },
+    { id: FormStep.SUCCESS, label: 'Fim', icon: 'fa-check' },
+  ];
 
-const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep }) => {
   return (
     <div className="w-full py-4 sm:py-6 flex justify-between items-center px-2 sm:px-4 max-w-4xl mx-auto">
       {steps.map((step, index) => (

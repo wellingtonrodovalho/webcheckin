@@ -67,7 +67,7 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
     tableData.push(["", ""]);
     tableData.push(["ACOMPANHANTES", ""]);
     data.companions.forEach((c, i) => {
-      tableData.push([`Acompanhante ${i + 1}`, `${c.name} (DOC: ${c.documentNumber})`]);
+      tableData.push([`Acompanhante ${i + 1}`, `${c.name}\nRG: ${c.rg || '-'}\nCPF: ${c.cpf || '-'}\nEmail: ${c.email || '-'}\nTel: ${c.phone || '-'}`]);
     });
   }
 
@@ -129,7 +129,7 @@ PET:
 
 ACOMPANHANTES:
 ${data.companions.length > 0 
-  ? data.companions.map((c, i) => `${i+1}. ${c.name} (Doc: ${c.documentNumber})`).join('\n')
+  ? data.companions.map((c, i) => `${i+1}. ${c.name} (RG: ${c.rg || '-'}, CPF: ${c.cpf || '-'}, Email: ${c.email || '-'}, Tel: ${c.phone || '-'})`).join('\n')
   : 'Nenhum'}
 --------------------------------------------------
 `.trim();
@@ -169,22 +169,50 @@ ${data.companions.length > 0
     "Emergência: Telefone": data.mainGuest.emergencyContactPhone || 'N/A',
     "Emergência: Parentesco": data.mainGuest.emergencyContactRelationship || 'N/A',
     // Colunas individuais para acompanhantes
-    "Acompanhante 1 Nome": data.companions[0]?.name || '',
-    "Acompanhante 1 Documento": data.companions[0]?.documentNumber || '',
-    "Acompanhante 2 Nome": data.companions[1]?.name || '',
-    "Acompanhante 2 Documento": data.companions[1]?.documentNumber || '',
-    "Acompanhante 3 Nome": data.companions[2]?.name || '',
-    "Acompanhante 3 Documento": data.companions[2]?.documentNumber || '',
-    "Acompanhante 4 Nome": data.companions[3]?.name || '',
-    "Acompanhante 4 Documento": data.companions[3]?.documentNumber || '',
-    "Acompanhante 5 Nome": data.companions[4]?.name || '',
-    "Acompanhante 5 Documento": data.companions[4]?.documentNumber || '',
-    "Acompanhante 6 Nome": data.companions[5]?.name || '',
-    "Acompanhante 6 Documento": data.companions[5]?.documentNumber || '',
-    "Acompanhante 7 Nome": data.companions[6]?.name || '',
-    "Acompanhante 7 Documento": data.companions[6]?.documentNumber || '',
+    "Acompanhante 1 Nome Completo": data.companions[0]?.name || '',
+    "Acompanhante 1 RG": data.companions[0]?.rg || '',
+    "Acompanhante 1 CPF": data.companions[0]?.cpf || '',
+    "Acompanhante 1 Email": data.companions[0]?.email || '',
+    "Acompanhante 1 Telefone": data.companions[0]?.phone || '',
+
+    "Acompanhante 2 Nome Completo": data.companions[1]?.name || '',
+    "Acompanhante 2 RG": data.companions[1]?.rg || '',
+    "Acompanhante 2 CPF": data.companions[1]?.cpf || '',
+    "Acompanhante 2 Email": data.companions[1]?.email || '',
+    "Acompanhante 2 Telefone": data.companions[1]?.phone || '',
+
+    "Acompanhante 3 Nome Completo": data.companions[2]?.name || '',
+    "Acompanhante 3 RG": data.companions[2]?.rg || '',
+    "Acompanhante 3 CPF": data.companions[2]?.cpf || '',
+    "Acompanhante 3 Email": data.companions[2]?.email || '',
+    "Acompanhante 3 Telefone": data.companions[2]?.phone || '',
+
+    "Acompanhante 4 Nome Completo": data.companions[3]?.name || '',
+    "Acompanhante 4 RG": data.companions[3]?.rg || '',
+    "Acompanhante 4 CPF": data.companions[3]?.cpf || '',
+    "Acompanhante 4 Email": data.companions[3]?.email || '',
+    "Acompanhante 4 Telefone": data.companions[3]?.phone || '',
+
+    "Acompanhante 5 Nome Completo": data.companions[4]?.name || '',
+    "Acompanhante 5 RG": data.companions[4]?.rg || '',
+    "Acompanhante 5 CPF": data.companions[4]?.cpf || '',
+    "Acompanhante 5 Email": data.companions[4]?.email || '',
+    "Acompanhante 5 Telefone": data.companions[4]?.phone || '',
+
+    "Acompanhante 6 Nome Completo": data.companions[5]?.name || '',
+    "Acompanhante 6 RG": data.companions[5]?.rg || '',
+    "Acompanhante 6 CPF": data.companions[5]?.cpf || '',
+    "Acompanhante 6 Email": data.companions[5]?.email || '',
+    "Acompanhante 6 Telefone": data.companions[5]?.phone || '',
+
+    "Acompanhante 7 Nome Completo": data.companions[6]?.name || '',
+    "Acompanhante 7 RG": data.companions[6]?.rg || '',
+    "Acompanhante 7 CPF": data.companions[6]?.cpf || '',
+    "Acompanhante 7 Email": data.companions[6]?.email || '',
+    "Acompanhante 7 Telefone": data.companions[6]?.phone || '',
+
     "Acompanhantes_Resumo": data.companions.length > 0 
-      ? data.companions.map((c, i) => `${i+1}: ${c.name} (Doc: ${c.documentNumber})`).join(' | ')
+      ? data.companions.map((c, i) => `${i+1}: ${c.name} (RG: ${c.rg || '-'}, CPF: ${c.cpf || '-'}, Email: ${c.email || '-'}, Tel: ${c.phone || '-'})`).join(' | ')
       : 'Nenhum',
     "Possui Pet?": data.pet.hasPet ? 'Sim' : 'Não',
     "Pet: Nome": data.pet.name || 'N/A',

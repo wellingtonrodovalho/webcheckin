@@ -21,7 +21,7 @@ export const PROPERTIES: Property[] = [
     ownerStatus: "Solteira",
     ownerProfession: "Pecuarista",
     petAllowed: false,
-    capacity: 5
+    capacity: 8
   },
   {
     id: "2",
@@ -43,7 +43,7 @@ export const PROPERTIES: Property[] = [
     ownerStatus: "Casado",
     ownerProfession: "Corretor de Imóveis",
     petAllowed: true,
-    capacity: 4
+    capacity: 8
   },
   {
     id: "4",
@@ -54,7 +54,7 @@ export const PROPERTIES: Property[] = [
     ownerStatus: "União estável",
     ownerProfession: "Administradora",
     petAllowed: true,
-    capacity: 6
+    capacity: 8
   },
   {
     id: "5",
@@ -65,7 +65,7 @@ export const PROPERTIES: Property[] = [
     ownerStatus: "Solteira",
     ownerProfession: "Pecuarista",
     petAllowed: false,
-    capacity: 4
+    capacity: 8
   },
   {
     id: "6",
@@ -76,7 +76,7 @@ export const PROPERTIES: Property[] = [
     ownerStatus: "Solteira",
     ownerProfession: "Pecuarista",
     petAllowed: false,
-    capacity: 3
+    capacity: 8
   },
   {
     id: "7",
@@ -87,7 +87,7 @@ export const PROPERTIES: Property[] = [
     ownerStatus: "Casado",
     ownerProfession: "Corretor de Imóveis",
     petAllowed: false,
-    capacity: 6
+    capacity: 8
   },
   {
     id: "8",
@@ -98,7 +98,7 @@ export const PROPERTIES: Property[] = [
     ownerStatus: "Casado",
     ownerProfession: "Corretor de Imóveis",
     petAllowed: true,
-    capacity: 4
+    capacity: 8
   }
 ];
 
@@ -116,6 +116,10 @@ export interface PetData {
 export interface Companion {
   id: string;
   name: string;
+  rg: string;
+  cpf: string;
+  email: string;
+  phone: string;
   documentNumber: string;
   documentFile?: string; // Base64
 }

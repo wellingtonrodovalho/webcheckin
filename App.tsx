@@ -52,6 +52,7 @@ const App: React.FC = () => {
   });
 
   const selectedProperty = PROPERTIES.find(p => p.id === formData.reservation.propertyId) || PROPERTIES[0];
+  const isPetAllowedProperty = formData.reservation.propertyId === '3' || formData.reservation.propertyId === '4';
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -63,15 +64,28 @@ const App: React.FC = () => {
   const handleReservationChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
     const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
-    setFormData(prev => ({
-      ...prev,
-      reservation: {
+    setFormData(prev => {
+      const nextReservation = {
         ...prev.reservation,
         [name]: (name === 'guestCount' || name === 'totalValue' || name === 'securityDepositValue') 
           ? (value === '' ? 0 : parseFloat(value)) 
           : val
+      };
+      
+      let nextPet = prev.pet;
+      if (name === 'propertyId') {
+        const isPetAllowed = value === '3' || value === '4';
+        if (!isPetAllowed) {
+          nextPet = { ...prev.pet, hasPet: false };
+        }
       }
-    }));
+
+      return {
+        ...prev,
+        reservation: nextReservation,
+        pet: nextPet
+      };
+    });
   };
 
   const handleMainGuestChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -80,7 +94,7 @@ const App: React.FC = () => {
   };
 
   const handlePetToggle = (hasPet: boolean) => {
-    setFormData(prev => ({ ...prev, pet: { ...prev.pet, hasPet } }));
+    setFormData(prev => ({ ...prev, pet: { ...prev.pet, hasPet: isPetAllowedProperty ? hasPet : false } }));
   };
 
   const handlePetChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -90,8 +104,24 @@ const App: React.FC = () => {
 
   const handleCompanionChange = (index: number, name: string, value: string) => {
     const newCompanions = [...formData.companions];
-    if (!newCompanions[index]) newCompanions[index] = { id: Math.random().toString(), name: '', documentNumber: '' };
+    if (!newCompanions[index]) {
+      newCompanions[index] = { 
+        id: Math.random().toString(), 
+        name: '', 
+        rg: '', 
+        cpf: '', 
+        email: '', 
+        phone: '', 
+        documentNumber: '' 
+      };
+    }
     newCompanions[index] = { ...newCompanions[index], [name]: value };
+    // Mapeamento de compatibilidade para documentNumber
+    if (name === 'cpf') {
+      newCompanions[index].documentNumber = value;
+    } else if (name === 'rg' && !newCompanions[index].cpf) {
+      newCompanions[index].documentNumber = value;
+    }
     setFormData(prev => ({ ...prev, companions: newCompanions }));
   };
 
@@ -198,60 +228,53 @@ const App: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                   <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                    <label className="text-[10px] font-black text-blue-600 uppercase mb-1 block">Hóspedes</label>
-                    <select name="guestCount" value={formData.reservation.guestCount} onChange={handleReservationChange} className="bg-transparent border-none p-0 focus:ring-0 font-black text-blue-800 text-xl w-full">
-                      {Array.from({ length: selectedProperty.capacity }).map((_, i) => <option key={i+1} value={i+1}>{i+1} Pessoa(s)</option>)}
-                    </select>
-                  </div>
-
-                  <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-                    <label className="text-[10px] font-black text-emerald-600 uppercase mb-1 block">Valor Total (R$)</label>
-                    <input type="number" name="totalValue" value={formData.reservation.totalValue || ''} onChange={handleReservationChange} placeholder="0,00" className="bg-transparent border-none p-0 focus:ring-0 font-black text-emerald-800 text-xl w-full" />
-                  </div>
-
-                  <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100">
-                    <label className="text-[10px] font-black text-amber-600 uppercase mb-1 block">Caução (R$)</label>
-                    <input type="number" name="securityDepositValue" value={formData.reservation.securityDepositValue || ''} onChange={handleReservationChange} placeholder="0,00" className="bg-transparent border-none p-0 focus:ring-0 font-black text-amber-800 text-xl w-full" />
-                  </div>
+                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                  <label className="text-[10px] font-black text-blue-600 uppercase mb-1 block">Hóspedes</label>
+                  <select name="guestCount" value={formData.reservation.guestCount} onChange={handleReservationChange} className="bg-transparent border-none p-0 focus:ring-0 font-black text-blue-800 text-xl w-full">
+                    {Array.from({ length: Math.max(8, selectedProperty.capacity) }).map((_, i) => <option key={i+1} value={i+1}>{i+1} Pessoa(s)</option>)}
+                  </select>
                 </div>
 
                 <div className="space-y-4 pt-4 border-t border-slate-100">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      name="hasVehicle" 
-                      checked={formData.reservation.hasVehicle} 
-                      onChange={handleReservationChange} 
-                      className="w-5 h-5 rounded text-blue-600 focus:ring-blue-500" 
-                    />
-                    <span className="text-sm font-bold text-slate-700">Virão de veículo próprio?</span>
-                  </label>
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        name="hasVehicle" 
+                        checked={formData.reservation.hasVehicle} 
+                        onChange={handleReservationChange} 
+                        className="w-5 h-5 rounded text-blue-600 focus:ring-blue-500" 
+                      />
+                      <span className="text-sm font-bold text-slate-700">Virão de veículo próprio?</span>
+                    </label>
+                    <p className="text-[10px] text-slate-400 font-bold ml-8 italic uppercase leading-normal">
+                      * Opcional: Se não souber os dados do carro agora, pode deixar em branco e enviar o formulário normalmente.
+                    </p>
+                  </div>
 
                   {formData.reservation.hasVehicle && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 animate-in fade-in slide-in-from-top-2">
                       <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Marca</label>
+                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Marca (Opcional)</label>
                         <input name="vehicleBrand" value={formData.reservation.vehicleBrand} onChange={handleReservationChange} placeholder="Ex: Toyota" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold" />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Modelo</label>
+                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Modelo (Opcional)</label>
                         <input name="vehicleModel" value={formData.reservation.vehicleModel} onChange={handleReservationChange} placeholder="Ex: Corolla" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold" />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Cor</label>
+                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Cor (Opcional)</label>
                         <input name="vehicleColor" value={formData.reservation.vehicleColor} onChange={handleReservationChange} placeholder="Ex: Prata" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold" />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Placa</label>
+                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Placa (Opcional)</label>
                         <input name="vehiclePlate" value={formData.reservation.vehiclePlate} onChange={handleReservationChange} placeholder="ABC-1234" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold uppercase" />
                       </div>
                     </div>
                   )}
                 </div>
               </div>
-              <button onClick={nextStep} disabled={!formData.reservation.startDate || formData.reservation.totalValue <= 0} className="w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 active:scale-[0.98] transition-all">CONTINUAR</button>
+              <button onClick={nextStep} disabled={!formData.reservation.startDate || !formData.reservation.endDate} className="w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 active:scale-[0.98] transition-all">CONTINUAR</button>
             </div>
           )}
 
@@ -349,6 +372,7 @@ const App: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-6">
                 <button 
+                  type="button"
                   onClick={() => handlePetToggle(false)}
                   className={`py-10 rounded-3xl border-4 transition-all flex flex-col items-center gap-3 ${!formData.pet.hasPet ? 'border-blue-600 bg-blue-50' : 'border-slate-100 bg-slate-50'}`}
                 >
@@ -358,15 +382,27 @@ const App: React.FC = () => {
                   <span className="font-black text-sm uppercase">NÃO LEVAREI</span>
                 </button>
 
-                <button 
-                  onClick={() => handlePetToggle(true)}
-                  className={`py-10 rounded-3xl border-4 transition-all flex flex-col items-center gap-3 ${formData.pet.hasPet ? 'border-orange-500 bg-orange-50' : 'border-slate-100 bg-slate-50'}`}
-                >
-                  <div className={`w-14 h-14 rounded-full flex items-center justify-center ${formData.pet.hasPet ? 'bg-orange-500 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}`}>
-                    <i className="fas fa-dog text-2xl"></i>
+                {isPetAllowedProperty ? (
+                  <button 
+                    type="button"
+                    onClick={() => handlePetToggle(true)}
+                    className={`py-10 rounded-3xl border-4 transition-all flex flex-col items-center gap-3 ${formData.pet.hasPet ? 'border-orange-500 bg-orange-50' : 'border-slate-100 bg-slate-50'}`}
+                  >
+                    <div className={`w-14 h-14 rounded-full flex items-center justify-center ${formData.pet.hasPet ? 'bg-orange-500 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}`}>
+                      <i className="fas fa-dog text-2xl"></i>
+                    </div>
+                    <span className="font-black text-sm uppercase">SIM, LEVAREI</span>
+                  </button>
+                ) : (
+                  <div 
+                    className="py-10 rounded-3xl border-4 border-dashed border-red-200 bg-red-50/20 flex flex-col items-center gap-3 cursor-not-allowed opacity-60 select-none text-center px-4"
+                  >
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center bg-red-100 text-red-500">
+                      <i className="fas fa-ban text-2xl"></i>
+                    </div>
+                    <span className="font-black text-xs text-red-600 uppercase">PET NÃO PERMITIDO NESTE IMÓVEL</span>
                   </div>
-                  <span className="font-black text-sm uppercase">SIM, LEVAREI</span>
-                </button>
+                )}
               </div>
 
               {formData.pet.hasPet && (
@@ -418,24 +454,60 @@ const App: React.FC = () => {
                       <div className="absolute top-0 left-0 bg-blue-600 text-white text-[9px] font-black px-3 py-1 rounded-br-xl uppercase">
                         Hóspede {idx + 2}
                       </div>
-                      <div className="pt-2 grid gap-3">
+                      <div className="pt-4 grid gap-3">
                         <div className="space-y-1">
                           <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Nome Completo</label>
                           <input 
                             placeholder="NOME COMPLETO DO ACOMPANHANTE" 
                             value={formData.companions[idx]?.name || ''} 
                             onChange={(e) => handleCompanionChange(idx, 'name', e.target.value)} 
-                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold uppercase focus:ring-2 focus:ring-blue-100 outline-none" 
+                            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold uppercase focus:ring-2 focus:ring-blue-100 outline-none placeholder:text-slate-300" 
                           />
                         </div>
-                        <div className="space-y-1">
-                          <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Documento (CPF ou RG)</label>
-                          <input 
-                            placeholder="NÚMERO DO DOCUMENTO" 
-                            value={formData.companions[idx]?.documentNumber || ''} 
-                            onChange={(e) => handleCompanionChange(idx, 'documentNumber', e.target.value)} 
-                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-100 outline-none" 
-                          />
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1">CPF</label>
+                            <input 
+                              placeholder="000.000.000-00" 
+                              value={formData.companions[idx]?.cpf || ''} 
+                              onChange={(e) => handleCompanionChange(idx, 'cpf', e.target.value)} 
+                              className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-100 outline-none placeholder:text-slate-300" 
+                            />
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1">RG</label>
+                            <input 
+                              placeholder="NÚMERO DO RG" 
+                              value={formData.companions[idx]?.rg || ''} 
+                              onChange={(e) => handleCompanionChange(idx, 'rg', e.target.value)} 
+                              className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold uppercase focus:ring-2 focus:ring-blue-100 outline-none placeholder:text-slate-300" 
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1">E-mail</label>
+                            <input 
+                              type="email"
+                              placeholder="EMAIL DO ACOMPANHANTE" 
+                              value={formData.companions[idx]?.email || ''} 
+                              onChange={(e) => handleCompanionChange(idx, 'email', e.target.value)} 
+                              className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-100 outline-none placeholder:text-slate-300" 
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Celular / WhatsApp</label>
+                            <input 
+                              placeholder="(00) 00000-0000" 
+                              value={formData.companions[idx]?.phone || ''} 
+                              onChange={(e) => handleCompanionChange(idx, 'phone', e.target.value)} 
+                              className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-100 outline-none placeholder:text-slate-300" 
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -452,7 +524,10 @@ const App: React.FC = () => {
                 <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-2xl text-slate-600">VOLTAR</button>
                 <button 
                   onClick={finalizeProcess} 
-                  disabled={loading || (formData.reservation.guestCount > 1 && Array.from({ length: formData.reservation.guestCount - 1 }).some((_, i) => !formData.companions[i]?.name || !formData.companions[i]?.documentNumber))} 
+                  disabled={loading || (formData.reservation.guestCount > 1 && Array.from({ length: formData.reservation.guestCount - 1 }).some((_, i) => {
+                    const companion = formData.companions[i];
+                    return !companion?.name || !companion?.rg || !companion?.cpf || !companion?.email || !companion?.phone;
+                  }))} 
                   className="flex-[2] py-4 bg-emerald-600 text-white font-black rounded-2xl shadow-xl shadow-emerald-100 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-30"
                 >
                   {loading ? <i className="fas fa-spinner fa-spin text-xl"></i> : <i className="fas fa-check-circle text-xl"></i>}
@@ -460,7 +535,10 @@ const App: React.FC = () => {
                 </button>
               </div>
               
-              {formData.reservation.guestCount > 1 && Array.from({ length: formData.reservation.guestCount - 1 }).some((_, i) => !formData.companions[i]?.name || !formData.companions[i]?.documentNumber) && (
+              {formData.reservation.guestCount > 1 && Array.from({ length: formData.reservation.guestCount - 1 }).some((_, i) => {
+                const companion = formData.companions[i];
+                return !companion?.name || !companion?.rg || !companion?.cpf || !companion?.email || !companion?.phone;
+              }) && (
                 <p className="text-[10px] text-red-500 font-black text-center uppercase animate-pulse">
                   * Preencha os dados de todos os acompanhantes para continuar
                 </p>

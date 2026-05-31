@@ -13,6 +13,50 @@ export interface Property {
 
 export const PROPERTIES: Property[] = [
   {
+    id: "7",
+    name: "Apto 2 suítes no Bueno, perto do Goiânia Shopping",
+    address: "Rua T-47, 173, Ap 410, Bloco C, Setor Bueno, Goiânia-GO, 74210-180",
+    ownerName: "Wellington Rodovalho Fonseca",
+    ownerCpf: "269.462.701-34",
+    ownerStatus: "Casado",
+    ownerProfession: "Corretor de Imóveis",
+    petAllowed: false,
+    capacity: 8
+  },
+  {
+    id: "4",
+    name: "Casa da vovó, 3 quartos, jardim e 2 vagas de garagem",
+    address: "Rua Santa Gertrudes, 26, Setor Coimbra, Goiânia-GO, 74535-420",
+    ownerName: "Cristiane Argenta Camelo",
+    ownerCpf: "592.216.581-04",
+    ownerStatus: "União estável",
+    ownerProfession: "Administradora",
+    petAllowed: true,
+    capacity: 8
+  },
+  {
+    id: "8",
+    name: "Crystal Place: Flat Moderno c/ Manobrista e Wi-Fi(1701)",
+    address: "Avenida Edmundo P. de Abreu, 31, Apartamento 1701, Setor Pedro Ludovico, Goiânia-GO, 74823-030",
+    ownerName: "Wellington Rodovalho Fonseca",
+    ownerCpf: "269.462.701-34",
+    ownerStatus: "Casado",
+    ownerProfession: "Corretor de Imóveis",
+    petAllowed: true,
+    capacity: 8
+  },
+  {
+    id: "3",
+    name: "Flat no Crystal Place, a 6 min do Flamboyant (1609)",
+    address: "Avenida Edmundo P. de Abreu, 31, Apartamento 1609, Setor Pedro Ludovico, Goiânia-GO, 74823-030",
+    ownerName: "Wellington Rodovalho Fonseca",
+    ownerCpf: "269.462.701-34",
+    ownerStatus: "Casado",
+    ownerProfession: "Corretor de Imóveis",
+    petAllowed: true,
+    capacity: 8
+  },
+  {
     id: "1",
     name: "Resort do Lago 207C 1 quarto(até 5 pessoas)",
     address: "Av. Caminho do Lago, Gleba 10D, Unidade 207 C, Caldas Novas-GO, 75.680-001",
@@ -35,28 +79,6 @@ export const PROPERTIES: Property[] = [
     capacity: 8
   },
   {
-    id: "3",
-    name: "Flat no Crystal Place, a 6 min do Flamboyant (1609)",
-    address: "Avenida Edmundo P. de Abreu, 31, Apartamento 1609, Setor Pedro Ludovico, Goiânia-GO, 74823-030",
-    ownerName: "Wellington Rodovalho Fonseca",
-    ownerCpf: "269.462.701-34",
-    ownerStatus: "Casado",
-    ownerProfession: "Corretor de Imóveis",
-    petAllowed: true,
-    capacity: 8
-  },
-  {
-    id: "4",
-    name: "Casa da vovó, 3 quartos, jardim e 2 vagas de garagem",
-    address: "Rua Santa Gertrudes, 26, Setor Coimbra, Goiânia-GO, 74535-420",
-    ownerName: "Cristiane Argenta Camelo",
-    ownerCpf: "592.216.581-04",
-    ownerStatus: "União estável",
-    ownerProfession: "Administradora",
-    petAllowed: true,
-    capacity: 8
-  },
-  {
     id: "5",
     name: "Studio A no Bueno, próximo ao Hospital Neurológico",
     address: "Rua T-45, 61, Ap 101A, Setor Bueno, Goiânia-GO, 74210-160",
@@ -76,28 +98,6 @@ export const PROPERTIES: Property[] = [
     ownerStatus: "Solteira",
     ownerProfession: "Pecuarista",
     petAllowed: false,
-    capacity: 8
-  },
-  {
-    id: "7",
-    name: "Apto 2 suítes no Bueno, perto do Goiânia Shopping",
-    address: "Rua T-47, 173, Ap 410, Bloco C, Setor Bueno, Goiânia-GO, 74210-180",
-    ownerName: "Wellington Rodovalho Fonseca",
-    ownerCpf: "269.462.701-34",
-    ownerStatus: "Casado",
-    ownerProfession: "Corretor de Imóveis",
-    petAllowed: false,
-    capacity: 8
-  },
-  {
-    id: "8",
-    name: "Crystal Place: Flat Moderno c/ Manobrista e Wi-Fi(1701)",
-    address: "Avenida Edmundo P. de Abreu, 31, Apartamento 1701, Setor Pedro Ludovico, Goiânia-GO, 74823-030",
-    ownerName: "Wellington Rodovalho Fonseca",
-    ownerCpf: "269.462.701-34",
-    ownerStatus: "Casado",
-    ownerProfession: "Corretor de Imóveis",
-    petAllowed: true,
     capacity: 8
   }
 ];

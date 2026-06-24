@@ -79,7 +79,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
         <input
           type="file"
           id={id}
-          accept="image/*,application/pdf"
+          accept="image/jpeg,image/png,image/jpg,application/pdf"
           onChange={handleFileChange}
           className="hidden"
         />
@@ -104,7 +104,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
           ) : (
             <div className="text-center p-4">
               <i className="fas fa-file-upload text-slate-400 text-3xl mb-2"></i>
-              <p className="text-slate-500 text-[10px] font-bold uppercase">Foto ou PDF</p>
+              <p className="text-slate-500 text-[10px] font-bold uppercase">PDF, JPEG ou PNG</p>
             </div>
           )}
         </label>

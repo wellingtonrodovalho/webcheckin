@@ -230,6 +230,90 @@ const App: React.FC = () => {
     }
   };
 
+  const sendTestData = async () => {
+    setLoading(true);
+    try {
+      const dummyBase64Image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+      const testData: FullFormData = {
+        lgpdConsent: true,
+        reservation: {
+          startDate: '2026-06-25',
+          endDate: '2026-07-02',
+          guestCount: 2,
+          reasonForVisit: 'Férias/Lazer',
+          hasVehicle: true,
+          vehicleBrand: 'Toyota',
+          vehicleModel: 'Corolla',
+          vehicleColor: 'Prata',
+          vehiclePlate: 'XYZ-1234',
+          propertyId: formData.reservation.propertyId || '3',
+          totalValue: 1200,
+          securityDepositValue: 300,
+          hasSecurityDeposit: true,
+          bookingSource: formData.reservation.bookingSource || 'alugagoias.com.br'
+        },
+        mainGuest: {
+          fullName: 'HÓSPEDE DE TESTE COMPLETO',
+          cpf: '123.456.789-00',
+          rg: '1234567-SSP/GO',
+          nationality: 'Brasileira',
+          email: 'wellington.rodovalho@gmail.com',
+          phone: '(62) 99999-9999',
+          address: 'Avenida Principal, 100, Setor Bueno, Goiânia - GO, 74210-000',
+          addressStreet: 'Avenida Principal, 100',
+          addressComplement: 'Apto 101',
+          addressDistrict: 'Setor Bueno',
+          addressCityState: 'Goiânia - GO',
+          addressZipCode: '74210-000',
+          maritalStatus: 'Casado(a)',
+          profession: 'Engenheiro',
+          emergencyContactName: 'Maria de Teste',
+          emergencyContactPhone: '(62) 98888-8888',
+          emergencyContactRelationship: 'Cônjuge',
+          documentFile: dummyBase64Image,
+          selfieFile: dummyBase64Image
+        },
+        pet: {
+          hasPet: true,
+          name: 'Max',
+          breed: 'Golden Retriever',
+          species: 'Cão/Gato',
+          weight: '30kg',
+          age: '3 anos',
+          size: 'Grande',
+          vaccineFile: dummyBase64Image
+        },
+        companions: [
+          {
+            id: 'companion-test-1',
+            name: 'ACOMPANHANTE DE TESTE SILVA',
+            rg: '7654321',
+            cpf: '987.654.321-99',
+            email: 'acompanhante.teste@gmail.com',
+            phone: '(62) 97777-7777',
+            documentNumber: '987.654.321-99',
+            documentFile: dummyBase64Image
+          }
+        ]
+      };
+
+      const testProperty = PROPERTIES.find(p => p.id === testData.reservation.propertyId) || PROPERTIES[0];
+      const dataToSave = { ...testData, propertyDetails: testProperty };
+      
+      const success = await saveToGoogleSheets(dataToSave);
+      if (success) {
+        alert("Teste enviado com sucesso! Verifique a sua planilha do Google e sua caixa de entrada.");
+        setStep(FormStep.SUCCESS);
+      } else {
+        alert("Erro de envio. Certifique-se de que o Apps Script está ativo.");
+      }
+    } catch (error) {
+      alert("Erro ao processar simulação.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pb-12 bg-slate-50 flex flex-col font-['Nunito']">
       <header className="bg-white border-b sticky top-0 z-50 shadow-sm px-6 py-4 flex justify-between items-center">
@@ -256,6 +340,36 @@ const App: React.FC = () => {
                 <span className="text-xs font-bold text-blue-900 uppercase">Autorizo o uso dos meus dados para fins contratuais (LGPD).</span>
               </label>
               <button onClick={nextStep} disabled={!formData.lgpdConsent} className="w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-lg disabled:opacity-30">INICIAR CADASTRO</button>
+
+              <div className="pt-6 border-t border-dashed border-slate-200 mt-6 space-y-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold uppercase tracking-wider mx-auto">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                  Área de Teste do Corretor
+                </div>
+                <p className="text-[11px] text-slate-400 font-medium">
+                  Use o botão abaixo para enviar dados simulados completos imediatamente à sua planilha e e-mail, verificando como tudo chega sem precisar preencher todo o formulário.
+                </p>
+                <button 
+                  onClick={sendTestData} 
+                  disabled={loading}
+                  className="w-full py-4 bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white font-black rounded-2xl shadow-md transition-all uppercase text-xs flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      ENVIANDO DADOS DE TESTE...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-paper-plane text-sm"></i>
+                      Simular Envio de Cadastro de Teste
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           )}
 

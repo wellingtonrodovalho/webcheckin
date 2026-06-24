@@ -63,14 +63,9 @@ function doPost(e) {
     var attachments = [];
     var fileUrls = {};
 
-    // 3. Mapear dados para as colunas (ignora colunas de controle do e-mail para não poluir a planilha)
-    var row = currentHeaders.map(function(h) {
-      if (h === "Destinatario_Email" || h === "Assunto_Email" || h === "Corpo_Email" || h === "PDF_Nome") {
-        return "";
-      }
-      var val = data[h] || "";
-      
-      // Detecta Base64 (Imagens ou PDF) para salvar no Drive
+    // 1. Processar todos os campos Base64 do payload primeiro (substitui o base64 pelo link do Drive)
+    Object.keys(data).forEach(function(key) {
+      var val = data[key];
       if (typeof val === 'string' && val.indexOf('data:') === 0) {
         try {
           var parts = val.split(',');
@@ -85,22 +80,28 @@ function doPost(e) {
             extension = ".png";
           }
           
-          var fileName = h.replace(/[^a-z0-9]/gi, '_') + "_" + new Date().getTime() + extension;
+          var fileName = key.replace(/[^a-z0-9]/gi, '_') + "_" + new Date().getTime() + extension;
           var blob = Utilities.newBlob(Utilities.base64Decode(base64Data), contentType, fileName);
           
           var file = folder.createFile(blob);
           file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
           
           attachments.push(blob);
-          fileUrls[h] = file.getUrl();
-          return file.getUrl();
+          fileUrls[key] = file.getUrl();
+          data[key] = file.getUrl(); // Substitui o base64 pelo link do Google Drive para não poluir
         } catch(e) { 
-          logDebug("Erro ao processar arquivo " + h + ": " + e.toString());
-          return "Erro no Arquivo"; 
+          logDebug("Erro ao processar arquivo " + key + ": " + e.toString());
+          data[key] = "Erro no Arquivo"; 
         }
       }
-      
-      return val;
+    });
+
+    // 3. Mapear dados para as colunas (ignora colunas de controle do e-mail para não poluir a planilha)
+    var row = currentHeaders.map(function(h) {
+      if (h === "Destinatario_Email" || h === "Assunto_Email" || h === "Corpo_Email" || h === "PDF_Nome") {
+        return "";
+      }
+      return data[h] || "";
     });
 
     // Adiciona a linha de dados

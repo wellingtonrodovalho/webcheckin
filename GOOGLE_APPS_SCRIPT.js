@@ -59,7 +59,7 @@ function doPost(e) {
     }
 
     var attachments = [];
-    var emailBody = "Novo cadastro recebido.\n\n";
+    var fileUrls = {};
 
     // 3. Mapear dados para as colunas
     var row = currentHeaders.map(function(h) {
@@ -87,7 +87,7 @@ function doPost(e) {
           file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
           
           attachments.push(blob);
-          emailBody += h + ": [Link: " + file.getUrl() + "]\n";
+          fileUrls[h] = file.getUrl();
           return file.getUrl();
         } catch(e) { 
           logDebug("Erro ao processar arquivo " + h + ": " + e.toString());
@@ -95,12 +95,14 @@ function doPost(e) {
         }
       }
       
-      emailBody += h + ": " + val + "\n";
       return val;
     });
 
     // Adiciona a linha de dados
     sheet.appendRow(row);
+    
+    // Constrói e-mail limpo somente com dados preenchidos
+    var emailBody = buildCleanEmailBody(data, fileUrls);
     
     // 4. E-mail de Notificação
     try {

@@ -138,6 +138,7 @@ export interface ReservationData {
   totalValue: number;
   securityDepositValue: number;
   hasSecurityDeposit: boolean;
+  bookingSource: string;
 }
 
 export interface MainGuest {

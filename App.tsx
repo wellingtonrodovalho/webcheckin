@@ -25,7 +25,8 @@ const App: React.FC = () => {
       propertyId: '3',
       totalValue: 0,
       securityDepositValue: 0,
-      hasSecurityDeposit: false
+      hasSecurityDeposit: false,
+      bookingSource: ''
     },
     pet: {
       hasPet: false,
@@ -247,7 +248,9 @@ const App: React.FC = () => {
           {step === FormStep.CONSENT && (
             <div className="space-y-6 text-center py-4">
               <h2 className="text-2xl font-black text-slate-800">Bem-vindo ao Check-in</h2>
-              <p className="text-slate-500 text-sm">Precisamos de algumas informações para gerar o seu contrato de locação temporária.</p>
+              <p className="text-slate-500 text-sm leading-relaxed">
+                Precisamos de algumas informações para a sua hospedagem. Se a sua reserva foi feita via <strong>alugagoias.com.br</strong> ou <strong>Booking.com</strong>, geraremos seu contrato de locação temporária. Se foi realizada pelo <strong>Airbnb</strong>, geraremos sua autorização de entrada.
+              </p>
               <label className="flex items-center gap-4 p-5 bg-blue-50 rounded-2xl border border-blue-100 cursor-pointer text-left">
                 <input type="checkbox" checked={formData.lgpdConsent} onChange={(e) => setFormData(prev => ({ ...prev, lgpdConsent: e.target.checked }))} className="w-6 h-6 rounded text-blue-600" />
                 <span className="text-xs font-bold text-blue-900 uppercase">Autorizo o uso dos meus dados para fins contratuais (LGPD).</span>
@@ -272,6 +275,37 @@ const App: React.FC = () => {
                     {PROPERTIES.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Origem da Reserva</label>
+                  <p className="text-[9px] text-blue-600 font-bold ml-1 mb-2 italic">* Onde você realizou a reserva?</p>
+                  <div className="flex flex-wrap gap-2">
+                    {['Airbnb', 'Booking.com', 'alugagoias.com.br', 'Outros'].map(opt => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, reservation: { ...prev.reservation, bookingSource: opt } }))}
+                        className={`px-4 py-2 rounded-xl border-2 text-[10px] font-bold uppercase transition-all ${
+                          formData.reservation.bookingSource === opt 
+                            ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm' 
+                            : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {formData.reservation.bookingSource && (
+                  <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-xs font-bold text-emerald-800 animate-in fade-in slide-in-from-top-2">
+                    {formData.reservation.bookingSource === 'Airbnb' ? (
+                      <p>✨ Como sua reserva foi feita pelo <strong>Airbnb</strong>, geraremos apenas a sua <strong>Autorização de Entrada</strong>.</p>
+                    ) : (
+                      <p>✨ Como sua reserva foi feita pelo/a <strong>{formData.reservation.bookingSource}</strong>, geraremos o seu <strong>Contrato de Locação Temporária</strong>.</p>
+                    )}
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Motivo da Viagem</label>
@@ -351,7 +385,7 @@ const App: React.FC = () => {
                   )}
                 </div>
               </div>
-              <button onClick={nextStep} disabled={!formData.reservation.startDate || !formData.reservation.endDate} className="w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 active:scale-[0.98] transition-all">CONTINUAR</button>
+              <button onClick={nextStep} disabled={!formData.reservation.startDate || !formData.reservation.endDate || !formData.reservation.bookingSource} className="w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 active:scale-[0.98] transition-all">CONTINUAR</button>
             </div>
           )}
 

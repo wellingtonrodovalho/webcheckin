@@ -43,7 +43,9 @@ function doPost(e) {
       ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] 
       : [];
     
-    var payloadKeys = Object.keys(data);
+    var payloadKeys = Object.keys(data).filter(function(key) {
+      return key !== "Destinatario_Email" && key !== "Assunto_Email" && key !== "Corpo_Email";
+    });
     
     // Identifica chaves no payload que ainda não são colunas na planilha
     var newKeys = payloadKeys.filter(function(key) {
@@ -61,8 +63,11 @@ function doPost(e) {
     var attachments = [];
     var fileUrls = {};
 
-    // 3. Mapear dados para as colunas
+    // 3. Mapear dados para as colunas (ignora colunas de controle do e-mail para não poluir a planilha)
     var row = currentHeaders.map(function(h) {
+      if (h === "Destinatario_Email" || h === "Assunto_Email" || h === "Corpo_Email" || h === "PDF_Nome") {
+        return "";
+      }
       var val = data[h] || "";
       
       // Detecta Base64 (Imagens ou PDF) para salvar no Drive
@@ -106,13 +111,18 @@ function doPost(e) {
     
     // 4. E-mail de Notificação
     try {
+      var recipient = data.Destinatario_Email || EMAIL_DESTINATARIO;
+      var subject = data.Assunto_Email || ("CHECK-IN ATUALIZADO: " + (data["Nome Titular"] || "Novo Hóspede"));
+      
       MailApp.sendEmail({
-        to: EMAIL_DESTINATARIO,
-        subject: "CHECK-IN ATUALIZADO: " + (data["Nome Titular"] || "Novo Hóspede"),
+        to: recipient,
+        subject: subject,
         body: emailBody,
         attachments: attachments
       });
-    } catch(e) {}
+    } catch(e) {
+      logDebug("Erro ao enviar email: " + e.toString());
+    }
 
     return ContentService.createTextOutput("OK").setMimeType(ContentService.MimeType.TEXT);
 
@@ -155,6 +165,7 @@ function buildCleanEmailBody(data, fileUrls) {
     { key: "Check-in", label: "Check-in" },
     { key: "Check-out", label: "Check-out" },
     { key: "Hóspedes", label: "Quantidade de Hóspedes" },
+    { key: "Origem da Reserva", label: "Origem da Reserva" },
     { key: "Motivo da Viagem", label: "Motivo da Viagem" },
     { key: "Valor Total", label: "Valor Total" },
     { key: "Caução", label: "Caução" }

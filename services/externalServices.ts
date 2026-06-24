@@ -31,6 +31,7 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
     ["Check-in", data.reservation.startDate],
     ["Check-out", data.reservation.endDate],
     ["Hóspedes", data.reservation.guestCount.toString()],
+    ["Origem da Reserva", data.reservation.bookingSource || 'N/A'],
     ["Valor Total", formatCurrency(data.reservation.totalValue)],
     ["Caução", formatCurrency(data.reservation.securityDepositValue || 0)],
     ["", ""],
@@ -100,6 +101,7 @@ RESERVA:
 - Check-in: ${data.reservation.startDate}
 - Check-out: ${data.reservation.endDate}
 - Hóspedes: ${data.reservation.guestCount}
+- Origem da Reserva: ${data.reservation.bookingSource || 'N/A'}
 - Motivo: ${data.reservation.reasonForVisit}
 - Valor Total: ${formatCurrency(data.reservation.totalValue)}
 - Caução: ${formatCurrency(data.reservation.securityDepositValue || 0)}
@@ -154,6 +156,7 @@ ${data.companions.length > 0
     "Check-out": data.reservation.endDate,
     "Motivo da Viagem": data.reservation.reasonForVisit,
     "Hóspedes": data.reservation.guestCount,
+    "Origem da Reserva": data.reservation.bookingSource || 'N/A',
     "Veículo Próprio?": data.reservation.hasVehicle ? 'Sim' : 'Não',
     "Marca Veículo": data.reservation.vehicleBrand || 'N/A',
     "Modelo Veículo": data.reservation.vehicleModel || 'N/A',
@@ -231,7 +234,7 @@ ${data.companions.length > 0
     "Pet: Peso": data.pet.weight || 'N/A',
     "Pet: Idade": data.pet.age || 'N/A',
     "Pet: Tamanho": data.pet.size || 'N/A',
-    "Relatório_PDF": pdfBase64,
+    "Relatório_PDF": pdfOutput,
     "Doc: Frente": data.mainGuest.documentFile || '',
     "Foto: Selfie": data.mainGuest.selfieFile || '',
     "Doc: Vacina Pet": data.pet.vaccineFile || 'N/A'

@@ -148,6 +148,11 @@ export interface MainGuest {
   email: string;
   phone: string;
   address: string;
+  addressStreet?: string;
+  addressComplement?: string;
+  addressDistrict?: string;
+  addressCityState?: string;
+  addressZipCode?: string;
   maritalStatus: string;
   profession: string;
   emergencyContactName?: string;

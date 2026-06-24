@@ -131,3 +131,162 @@ function logDebug(msg) {
     logSheet.appendRow([new Date(), msg]);
   } catch(e) {}
 }
+
+function buildCleanEmailBody(data, fileUrls) {
+  var lines = [];
+  lines.push("Novo cadastro recebido.");
+  lines.push("");
+
+  // Helper to check if a value is empty or unanswered/placeholder
+  function isCleanValue(val) {
+    if (val === null || val === undefined) return false;
+    var s = String(val).trim();
+    if (s === "" || s.toUpperCase() === "N/A" || s === "-" || s.toUpperCase() === "NENHUM" || s.toUpperCase() === "N/A / N/A" || s.toUpperCase() === "N/A / N/A / N/A") return false;
+    return true;
+  }
+
+  // Section 1: Dados do Imóvel e Reserva
+  lines.push("=== DADOS DO IMÓVEL E RESERVA ===");
+  var bookingFields = [
+    { key: "Data de Envio", label: "Data de Envio" },
+    { key: "Imóvel", label: "Imóvel" },
+    { key: "Endereço do Imóvel", label: "Endereço do Imóvel" },
+    { key: "Proprietário", label: "Proprietário" },
+    { key: "Check-in", label: "Check-in" },
+    { key: "Check-out", label: "Check-out" },
+    { key: "Hóspedes", label: "Quantidade de Hóspedes" },
+    { key: "Motivo da Viagem", label: "Motivo da Viagem" },
+    { key: "Valor Total", label: "Valor Total" },
+    { key: "Caução", label: "Caução" }
+  ];
+  
+  bookingFields.forEach(function(f) {
+    var val = data[f.key];
+    if (isCleanValue(val)) {
+      lines.push("- " + f.label + ": " + val);
+    }
+  });
+  lines.push("");
+
+  // Section 2: Dados do Titular
+  lines.push("=== TITULAR ===");
+  var mainGuestFields = [
+    { key: "Nome Titular", label: "Nome" },
+    { key: "CPF Titular", label: "CPF" },
+    { key: "RG Titular", label: "RG" },
+    { key: "Nacionalidade Titular", label: "Nacionalidade" },
+    { key: "Estado Civil Titular", label: "Estado Civil" },
+    { key: "Profissão Titular", label: "Profissão" },
+    { key: "E-mail", label: "E-mail" },
+    { key: "Telefone", label: "Telefone" },
+    { key: "Endereço", label: "Endereço Completo" },
+    { key: "Logradouro e Número", label: "Logradouro e Número" },
+    { key: "Complemento", label: "Complemento" },
+    { key: "Bairro", label: "Bairro" },
+    { key: "Cidade e Estado", label: "Cidade e Estado" },
+    { key: "CEP", label: "CEP" }
+  ];
+  
+  mainGuestFields.forEach(function(f) {
+    var val = data[f.key];
+    if (isCleanValue(val)) {
+      lines.push("- " + f.label + ": " + val);
+    }
+  });
+  lines.push("");
+
+  // Section 3: Contato de Emergência
+  var emergencyFields = [
+    { key: "Emergência: Nome", label: "Nome" },
+    { key: "Emergência: Telefone", label: "Telefone" },
+    { key: "Emergência: Parentesco", label: "Parentesco" }
+  ];
+  
+  var hasEmergency = emergencyFields.some(function(f) { return isCleanValue(data[f.key]); });
+  if (hasEmergency) {
+    lines.push("=== CONTATO DE EMERGÊNCIA ===");
+    emergencyFields.forEach(function(f) {
+      var val = data[f.key];
+      if (isCleanValue(val)) {
+        lines.push("- " + f.label + ": " + val);
+      }
+    });
+    lines.push("");
+  }
+
+  // Section 4: Veículo (somente se responder Sim ou tiver campos preenchidos)
+  var hasVehicleFields = isCleanValue(data["Marca Veículo"]) || isCleanValue(data["Modelo Veículo"]) || isCleanValue(data["Placa Veículo"]) || data["Veículo Próprio?"] === "Sim";
+  if (hasVehicleFields) {
+    lines.push("=== VEÍCULO ===");
+    if (isCleanValue(data["Veículo Próprio?"])) lines.push("- Veículo Próprio?: " + data["Veículo Próprio?"]);
+    if (isCleanValue(data["Marca Veículo"])) lines.push("- Marca: " + data["Marca Veículo"]);
+    if (isCleanValue(data["Modelo Veículo"])) lines.push("- Modelo: " + data["Modelo Veículo"]);
+    if (isCleanValue(data["Cor Veículo"])) lines.push("- Cor: " + data["Cor Veículo"]);
+    if (isCleanValue(data["Placa Veículo"])) lines.push("- Placa: " + data["Placa Veículo"]);
+    lines.push("");
+  }
+
+  // Section 5: Pet (somente se responder Sim ou tiver campos preenchidos)
+  var hasPetFields = isCleanValue(data["Pet: Nome"]) || isCleanValue(data["Pet: Raça"]) || data["Possui Pet?"] === "Sim";
+  if (hasPetFields) {
+    lines.push("=== PET ===");
+    if (isCleanValue(data["Possui Pet?"])) lines.push("- Possui Pet?: " + data["Possui Pet?"]);
+    if (isCleanValue(data["Pet: Nome"])) lines.push("- Nome: " + data["Pet: Nome"]);
+    if (isCleanValue(data["Pet: Raça"])) lines.push("- Raça: " + data["Pet: Raça"]);
+    if (isCleanValue(data["Pet: Espécie"])) lines.push("- Espécie: " + data["Pet: Espécie"]);
+    if (isCleanValue(data["Pet: Peso"])) lines.push("- Peso: " + data["Pet: Peso"]);
+    if (isCleanValue(data["Pet: Idade"])) lines.push("- Idade: " + data["Pet: Idade"]);
+    if (isCleanValue(data["Pet: Tamanho"])) lines.push("- Tamanho: " + data["Pet: Tamanho"]);
+    lines.push("");
+  }
+
+  // Section 6: Acompanhantes (somente os preenchidos)
+  var companionLines = [];
+  for (var i = 1; i <= 7; i++) {
+    var nameKey = "Acompanhante " + i + " Nome Completo";
+    if (isCleanValue(data[nameKey])) {
+      var details = [];
+      details.push("Nome: " + data[nameKey]);
+      
+      var rgVal = data["Acompanhante " + i + " RG"];
+      if (isCleanValue(rgVal)) details.push("RG: " + rgVal);
+      
+      var cpfVal = data["Acompanhante " + i + " CPF"];
+      if (isCleanValue(cpfVal)) details.push("CPF: " + cpfVal);
+      
+      var emailVal = data["Acompanhante " + i + " Email"];
+      if (isCleanValue(emailVal)) details.push("Email: " + emailVal);
+      
+      var telVal = data["Acompanhante " + i + " Telefone"];
+      if (isCleanValue(telVal)) details.push("Telefone: " + telVal);
+      
+      companionLines.push("- " + details.join(" | "));
+    }
+  }
+  
+  if (companionLines.length > 0) {
+    lines.push("=== ACOMPANHANTES ===");
+    companionLines.forEach(function(l) {
+      lines.push(l);
+    });
+    lines.push("");
+  }
+
+  // Section 7: Arquivos Enviados (links do Google Drive)
+  var fileLines = [];
+  for (var key in fileUrls) {
+    if (key !== "Relatório_PDF" && key !== "Relatorio_PDF") { // Remove de vez qualquer referência a Relatório_PDF
+      fileLines.push("- " + key + ": [Link: " + fileUrls[key] + "]");
+    }
+  }
+  
+  if (fileLines.length > 0) {
+    lines.push("=== DOCUMENTOS E IMAGENS (GOOGLE DRIVE) ===");
+    fileLines.forEach(function(l) {
+      lines.push(l);
+    });
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}

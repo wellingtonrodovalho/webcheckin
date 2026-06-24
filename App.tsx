@@ -41,6 +41,11 @@ const App: React.FC = () => {
       email: '',
       phone: '',
       address: '',
+      addressStreet: '',
+      addressComplement: '',
+      addressDistrict: '',
+      addressCityState: '',
+      addressZipCode: '',
       maritalStatus: '',
       profession: '',
       emergencyContactName: '',
@@ -102,9 +107,67 @@ const App: React.FC = () => {
     });
   };
 
+  const [searchingCep, setSearchingCep] = useState(false);
+  const [cepError, setCepError] = useState('');
+
+  const lookupCep = async (cepValue: string) => {
+    const cleanCep = cepValue.replace(/\D/g, '');
+    if (cleanCep.length !== 8) {
+      setCepError('CEP inválido (deve ter 8 dígitos)');
+      return;
+    }
+    setSearchingCep(true);
+    setCepError('');
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const data = await response.json();
+      if (data.erro) {
+        setCepError('CEP não encontrado nos Correios');
+      } else {
+        setFormData(prev => {
+          const updatedGuest = {
+            ...prev.mainGuest,
+            addressStreet: data.logradouro || '',
+            addressDistrict: data.bairro || '',
+            addressCityState: `${data.localidade} - ${data.uf}`,
+            addressZipCode: data.cep || cepValue
+          };
+          
+          const parts = [];
+          if (updatedGuest.addressStreet) parts.push(updatedGuest.addressStreet);
+          if (updatedGuest.addressComplement) parts.push(updatedGuest.addressComplement);
+          if (updatedGuest.addressDistrict) parts.push(`Bairro: ${updatedGuest.addressDistrict}`);
+          if (updatedGuest.addressCityState) parts.push(updatedGuest.addressCityState);
+          if (updatedGuest.addressZipCode) parts.push(`CEP: ${updatedGuest.addressZipCode}`);
+          updatedGuest.address = parts.join(', ');
+          
+          return { ...prev, mainGuest: updatedGuest };
+        });
+      }
+    } catch (err) {
+      setCepError('Erro ao buscar CEP');
+    } finally {
+      setSearchingCep(false);
+    }
+  };
+
   const handleMainGuestChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, mainGuest: { ...prev.mainGuest, [name]: value } }));
+    setFormData(prev => {
+      const updatedGuest = { ...prev.mainGuest, [name]: value };
+      
+      if (['addressStreet', 'addressComplement', 'addressDistrict', 'addressCityState', 'addressZipCode'].includes(name)) {
+        const parts = [];
+        if (updatedGuest.addressStreet) parts.push(updatedGuest.addressStreet);
+        if (updatedGuest.addressComplement) parts.push(updatedGuest.addressComplement);
+        if (updatedGuest.addressDistrict) parts.push(`Bairro: ${updatedGuest.addressDistrict}`);
+        if (updatedGuest.addressCityState) parts.push(updatedGuest.addressCityState);
+        if (updatedGuest.addressZipCode) parts.push(`CEP: ${updatedGuest.addressZipCode}`);
+        updatedGuest.address = parts.join(', ');
+      }
+      
+      return { ...prev, mainGuest: updatedGuest };
+    });
   };
 
   const handlePetToggle = (hasPet: boolean) => {
@@ -324,13 +387,89 @@ const App: React.FC = () => {
                   <input name="phone" value={formData.mainGuest.phone} onChange={handleMainGuestChange} placeholder="TELEFONE / WHATSAPP" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
                 </div>
 
-                <textarea 
-                  name="address" 
-                  value={formData.mainGuest.address} 
-                  onChange={handleMainGuestChange} 
-                  placeholder="ENDEREÇO COMPLETO (RUA, NÚMERO, BAIRRO, CIDADE/UF)" 
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold min-h-[80px] placeholder:text-slate-300"
-                />
+                <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <span className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <i className="fas fa-map-marked-alt text-blue-600"></i> Endereço do Titular
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-2 space-y-1">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">CEP</label>
+                      <div className="relative flex gap-2">
+                        <input 
+                          name="addressZipCode" 
+                          value={formData.mainGuest.addressZipCode || ''} 
+                          onChange={(e) => {
+                            handleMainGuestChange(e);
+                            if (e.target.value.replace(/\D/g, '').length === 8) {
+                              lookupCep(e.target.value);
+                            }
+                          }} 
+                          placeholder="00000-000" 
+                          className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl font-bold text-sm" 
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => lookupCep(formData.mainGuest.addressZipCode || '')}
+                          disabled={searchingCep}
+                          className="px-4 bg-blue-600 hover:bg-blue-700 text-white font-black text-[10px] rounded-xl shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap uppercase"
+                        >
+                          {searchingCep ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-search"></i>}
+                          Buscar CEP
+                        </button>
+                      </div>
+                      {cepError && <span className="text-[10px] font-bold text-red-500 ml-1 block">{cepError}</span>}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="md:col-span-3 space-y-1">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Logradouro (Rua, Avenida, Praça, etc.) e Número</label>
+                      <input 
+                        name="addressStreet" 
+                        value={formData.mainGuest.addressStreet || ''} 
+                        onChange={handleMainGuestChange} 
+                        placeholder="Rua Exemplo, 123" 
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl font-bold text-sm uppercase placeholder:text-slate-300" 
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Complemento</label>
+                      <input 
+                        name="addressComplement" 
+                        value={formData.mainGuest.addressComplement || ''} 
+                        onChange={handleMainGuestChange} 
+                        placeholder="Ap 101, Bloco B" 
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl font-bold text-sm uppercase placeholder:text-slate-300" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Bairro</label>
+                      <input 
+                        name="addressDistrict" 
+                        value={formData.mainGuest.addressDistrict || ''} 
+                        onChange={handleMainGuestChange} 
+                        placeholder="Setor Central" 
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl font-bold text-sm uppercase placeholder:text-slate-300" 
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Cidade e Estado</label>
+                      <input 
+                        name="addressCityState" 
+                        value={formData.mainGuest.addressCityState || ''} 
+                        onChange={handleMainGuestChange} 
+                        placeholder="Goiânia - GO" 
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl font-bold text-sm uppercase placeholder:text-slate-300" 
+                      />
+                    </div>
+                  </div>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <FileUpload id="doc_main" label="Doc. Identidade (Frente)" onFileSelect={handleUpload('main')} />
@@ -368,7 +507,7 @@ const App: React.FC = () => {
                 <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl text-slate-600">VOLTAR</button>
                 <button 
                   onClick={nextStep} 
-                  disabled={!formData.mainGuest.fullName || !formData.mainGuest.cpf || !formData.mainGuest.phone || !formData.mainGuest.documentFile || !formData.mainGuest.selfieFile} 
+                  disabled={!formData.mainGuest.fullName || !formData.mainGuest.cpf || !formData.mainGuest.phone || !formData.mainGuest.documentFile || !formData.mainGuest.selfieFile || !formData.mainGuest.addressStreet || !formData.mainGuest.addressZipCode} 
                   className="flex-[2] py-4 bg-blue-600 text-white font-black rounded-xl disabled:opacity-30 transition-all animate-none"
                 >
                   {isPetAllowedProperty ? 'PRÓXIMO: PET' : 'PRÓXIMO: HÓSPEDES'}

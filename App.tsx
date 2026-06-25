@@ -532,7 +532,11 @@ const App: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <FileUpload id="doc_main" label="Doc. Identidade (Frente)" onFileSelect={handleUpload('main')} />
-                  <SelfieCapture label="Selfie do Titular" onCapture={(base64) => setFormData(prev => ({ ...prev, mainGuest: { ...prev.mainGuest, selfieFile: base64 } }))} />
+                  <SelfieCapture 
+                    label="Selfie do Titular" 
+                    hint="* Selfie com o documento de identidade (ambos visíveis)"
+                    onCapture={(base64) => setFormData(prev => ({ ...prev, mainGuest: { ...prev.mainGuest, selfieFile: base64 } }))} 
+                  />
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-slate-100">

@@ -4,9 +4,10 @@ import React, { useRef, useState, useEffect } from 'react';
 interface SelfieCaptureProps {
   onCapture: (base64: string) => void;
   label: string;
+  hint?: string;
 }
 
-const SelfieCapture: React.FC<SelfieCaptureProps> = ({ onCapture, label }) => {
+const SelfieCapture: React.FC<SelfieCaptureProps> = ({ onCapture, label, hint }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -66,6 +67,7 @@ const SelfieCapture: React.FC<SelfieCaptureProps> = ({ onCapture, label }) => {
   return (
     <div className="flex flex-col gap-2">
       <label className="text-sm font-bold text-slate-700 uppercase tracking-tight">{label}</label>
+      {hint && <span className="text-[10px] text-blue-600 font-bold -mt-1 leading-normal italic">{hint}</span>}
       <div className="relative w-full aspect-square max-w-[200px] mx-auto overflow-hidden rounded-3xl border-4 border-slate-200 bg-slate-900 flex items-center justify-center">
         {capturedImage ? (
           <img src={capturedImage} className="w-full h-full object-cover" alt="Selfie" />

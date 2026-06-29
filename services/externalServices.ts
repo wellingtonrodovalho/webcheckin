@@ -237,7 +237,8 @@ ${data.companions.length > 0
     "Relatório_PDF": pdfOutput,
     "Doc: Frente": data.mainGuest.documentFile || '',
     "Foto: Selfie": data.mainGuest.selfieFile || '',
-    "Doc: Vacina Pet": data.pet.vaccineFile || 'N/A'
+    "Doc: Vacina Pet": data.pet.vaccineFile || 'N/A',
+    "Link_Boas_Vindas": data.propertyDetails?.welcomeLink || ''
   };
 
   try {

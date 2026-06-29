@@ -9,6 +9,7 @@ export interface Property {
   ownerProfession: string;
   petAllowed: boolean;
   capacity: number;
+  welcomeLink?: string; // Link de boas-vindas do imóvel
 }
 
 export const PROPERTIES: Property[] = [
@@ -21,7 +22,8 @@ export const PROPERTIES: Property[] = [
     ownerStatus: "Casado",
     ownerProfession: "Corretor de Imóveis",
     petAllowed: false,
-    capacity: 8
+    capacity: 8,
+    welcomeLink: "https://boasvindas-mara.vercel.app/"
   },
   {
     id: "4",
@@ -32,7 +34,8 @@ export const PROPERTIES: Property[] = [
     ownerStatus: "União estável",
     ownerProfession: "Administradora",
     petAllowed: true,
-    capacity: 8
+    capacity: 8,
+    welcomeLink: "https://casacoimbraguiadigital.vercel.app/"
   },
   {
     id: "8",
@@ -43,7 +46,8 @@ export const PROPERTIES: Property[] = [
     ownerStatus: "Casado",
     ownerProfession: "Corretor de Imóveis",
     petAllowed: true,
-    capacity: 8
+    capacity: 8,
+    welcomeLink: "https://guiadohospede1701.vercel.app/"
   },
   {
     id: "3",
@@ -54,7 +58,8 @@ export const PROPERTIES: Property[] = [
     ownerStatus: "Casado",
     ownerProfession: "Corretor de Imóveis",
     petAllowed: true,
-    capacity: 8
+    capacity: 8,
+    welcomeLink: "https://boasvindascrystal-wheat.vercel.app/"
   },
   {
     id: "1",
@@ -65,7 +70,8 @@ export const PROPERTIES: Property[] = [
     ownerStatus: "Solteira",
     ownerProfession: "Pecuarista",
     petAllowed: false,
-    capacity: 8
+    capacity: 8,
+    welcomeLink: "https://alugagoias.com.br/boas-vindas/resort-lago-207c"
   },
   {
     id: "2",
@@ -76,7 +82,8 @@ export const PROPERTIES: Property[] = [
     ownerStatus: "Solteira",
     ownerProfession: "Pecuarista",
     petAllowed: false,
-    capacity: 8
+    capacity: 8,
+    welcomeLink: "https://alugagoias.com.br/boas-vindas/resort-lago-408d"
   },
   {
     id: "5",
@@ -87,7 +94,8 @@ export const PROPERTIES: Property[] = [
     ownerStatus: "Solteira",
     ownerProfession: "Pecuarista",
     petAllowed: false,
-    capacity: 8
+    capacity: 8,
+    welcomeLink: "https://boasvindasstudios.vercel.app/"
   },
   {
     id: "6",
@@ -98,7 +106,8 @@ export const PROPERTIES: Property[] = [
     ownerStatus: "Solteira",
     ownerProfession: "Pecuarista",
     petAllowed: false,
-    capacity: 8
+    capacity: 8,
+    welcomeLink: "https://boasvindasstudios.vercel.app/"
   }
 ];
 

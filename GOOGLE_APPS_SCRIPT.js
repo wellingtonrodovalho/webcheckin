@@ -125,6 +125,46 @@ function doPost(e) {
       logDebug("Erro ao enviar email: " + e.toString());
     }
 
+    // 5. E-mail de Boas-vindas para o Hóspede (com o link do imóvel)
+    try {
+      var guestEmail = data["E-mail"] || data["Email Titular"] || data["Email"];
+      var guestName = data["Nome Titular"] || "Hóspede";
+      var propertyName = data["Imóvel"] || "Imóvel";
+      var welcomeLink = data["Link_Boas_Vindas"];
+      
+      if (guestEmail && welcomeLink && welcomeLink.indexOf("http") === 0) {
+        var guestSubject = "Guia de Boas-Vindas - " + propertyName + " | " + guestName + " ✨";
+        
+        var guestBody = "Olá, " + guestName + ", tudo bem?\n\n" +
+          "Estou te enviando nosso Guia Digital de Boas-Vindas do " + propertyName + ". \n" +
+          "Nele você encontra todas as informações necessárias para uma excelente estadia conosco. ✨\n\n" +
+          "🔗 Clique no link: \n" +
+          welcomeLink + "\n\n" +
+          "🕙 Horários\n" +
+          "🗺️ Locais importantes\n" +
+          "🔑 Senha e como abrir a fechadura\n" +
+          "🧑‍🏫 Instruções de uso de equipamentos\n" +
+          "📤 Checkout\n" +
+          "🚨 Emergência\n\n" +
+          "⚠️ INFORMAÇÕES IMPORTANTES\n" +
+          "🛫 Check-in: A partir das 14h.\n" +
+          "🛬 Checkout: Até às 11h.\n\n" +
+          "Tenha uma excelente estada cinco estrelas! 🏨\n\n" +
+          "Me contate sempre que precisar... 📱 62 99151-4568\n\n" +
+          "Seu anfitrião,\n" +
+          "Wellington Rodovalho";
+          
+        MailApp.sendEmail({
+          to: guestEmail,
+          subject: guestSubject,
+          body: guestBody
+        });
+        logDebug("E-mail de boas-vindas enviado para o hóspede: " + guestEmail);
+      }
+    } catch(e) {
+      logDebug("Erro ao enviar e-mail de boas-vindas para o hóspede: " + e.toString());
+    }
+
     return ContentService.createTextOutput("OK").setMimeType(ContentService.MimeType.TEXT);
 
   } catch (error) {

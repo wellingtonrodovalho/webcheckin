@@ -44,7 +44,7 @@ function doPost(e) {
       : [];
     
     var payloadKeys = Object.keys(data).filter(function(key) {
-      return key !== "Destinatario_Email" && key !== "Assunto_Email" && key !== "Corpo_Email";
+      return key !== "Destinatario_Email" && key !== "Assunto_Email" && key !== "Corpo_Email" && key !== "PDF_Nome" && key !== "Guest_Email" && key !== "Guest_Name" && key !== "Property_Name" && key !== "Welcome_Link";
     });
     
     // Identifica chaves no payload que ainda não são colunas na planilha
@@ -98,7 +98,7 @@ function doPost(e) {
 
     // 3. Mapear dados para as colunas (ignora colunas de controle do e-mail para não poluir a planilha)
     var row = currentHeaders.map(function(h) {
-      if (h === "Destinatario_Email" || h === "Assunto_Email" || h === "Corpo_Email" || h === "PDF_Nome") {
+      if (h === "Destinatario_Email" || h === "Assunto_Email" || h === "Corpo_Email" || h === "PDF_Nome" || h === "Guest_Email" || h === "Guest_Name" || h === "Property_Name" || h === "Welcome_Link") {
         return "";
       }
       return data[h] || "";
@@ -127,10 +127,12 @@ function doPost(e) {
 
     // 5. E-mail de Boas-vindas para o Hóspede (com o link do imóvel)
     try {
-      var guestEmail = data["Email_Titular"] || data["E-mail"] || data["Email Titular"] || data["Email"];
-      var guestName = data["Hospede_Titular"] || data["Nome Titular"] || "Hóspede";
-      var propertyName = data["Imovel_Nome"] || data["Imóvel"] || "Imóvel";
-      var welcomeLink = data["Link_Boas_Vindas"];
+      var guestEmail = data["Guest_Email"] || data["Email_Titular"] || data["E-mail"] || data["Email Titular"] || data["Email"];
+      var guestName = data["Guest_Name"] || data["Hospede_Titular"] || data["Nome Titular"] || "Hóspede";
+      var propertyName = data["Property_Name"] || data["Imovel_Nome"] || data["Imóvel"] || "Imóvel";
+      var welcomeLink = data["Welcome_Link"] || data["Link_Boas_Vindas"];
+      
+      logDebug("Tentando enviar e-mail de boas-vindas: Email=" + guestEmail + ", Imóvel=" + propertyName + ", Link=" + welcomeLink);
       
       if (guestEmail && welcomeLink && welcomeLink.indexOf("http") === 0) {
         var guestSubject = "Guia de Boas-Vindas - " + propertyName + " | " + guestName + " ✨";
@@ -155,11 +157,13 @@ function doPost(e) {
           "Wellington Rodovalho";
           
         MailApp.sendEmail({
-          to: guestEmail,
+          to: guestEmail.trim(),
           subject: guestSubject,
           body: guestBody
         });
-        logDebug("E-mail de boas-vindas enviado para o hóspede: " + guestEmail);
+        logDebug("E-mail de boas-vindas enviado com sucesso para o hóspede: " + guestEmail);
+      } else {
+        logDebug("E-mail de boas-vindas não enviado. Condições não atendidas: Email válido? " + !!guestEmail + ", Link de boas-vindas válido? " + !!(welcomeLink && welcomeLink.indexOf("http") === 0));
       }
     } catch(e) {
       logDebug("Erro ao enviar e-mail de boas-vindas para o hóspede: " + e.toString());

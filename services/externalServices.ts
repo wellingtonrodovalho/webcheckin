@@ -238,7 +238,11 @@ ${data.companions.length > 0
     "Doc: Frente": data.mainGuest.documentFile || '',
     "Foto: Selfie": data.mainGuest.selfieFile || '',
     "Doc: Vacina Pet": data.pet.vaccineFile || 'N/A',
-    "Link_Boas_Vindas": data.propertyDetails?.welcomeLink || ''
+    "Link_Boas_Vindas": data.propertyDetails?.welcomeLink || '',
+    "Guest_Email": data.mainGuest.email,
+    "Guest_Name": data.mainGuest.fullName,
+    "Property_Name": data.propertyDetails?.name || 'N/A',
+    "Welcome_Link": data.propertyDetails?.welcomeLink || ''
   };
 
   try {

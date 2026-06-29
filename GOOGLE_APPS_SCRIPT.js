@@ -30,7 +30,7 @@ function doPost(e) {
       data = JSON.parse(decodeURIComponent(rawData));
     }
 
-    logDebug("Recebido cadastro de: " + (data["Nome Titular"] || "Hóspede"));
+    logDebug("Recebido cadastro de: " + (data["Hospede_Titular"] || data["Nome Titular"] || "Hóspede"));
 
     // 1. Gerenciar Pasta de Arquivos
     var folderName = "Arquivos_Checkin";
@@ -113,7 +113,7 @@ function doPost(e) {
     // 4. E-mail de Notificação
     try {
       var recipient = data.Destinatario_Email || EMAIL_DESTINATARIO;
-      var subject = data.Assunto_Email || ("CHECK-IN ATUALIZADO: " + (data["Nome Titular"] || "Novo Hóspede"));
+      var subject = data.Assunto_Email || ("CHECK-IN ATUALIZADO: " + (data["Hospede_Titular"] || data["Nome Titular"] || "Novo Hóspede"));
       
       MailApp.sendEmail({
         to: recipient,
@@ -127,9 +127,9 @@ function doPost(e) {
 
     // 5. E-mail de Boas-vindas para o Hóspede (com o link do imóvel)
     try {
-      var guestEmail = data["E-mail"] || data["Email Titular"] || data["Email"];
-      var guestName = data["Nome Titular"] || "Hóspede";
-      var propertyName = data["Imóvel"] || "Imóvel";
+      var guestEmail = data["Email_Titular"] || data["E-mail"] || data["Email Titular"] || data["Email"];
+      var guestName = data["Hospede_Titular"] || data["Nome Titular"] || "Hóspede";
+      var propertyName = data["Imovel_Nome"] || data["Imóvel"] || "Imóvel";
       var welcomeLink = data["Link_Boas_Vindas"];
       
       if (guestEmail && welcomeLink && welcomeLink.indexOf("http") === 0) {

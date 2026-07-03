@@ -34,6 +34,53 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, onResend }) => 
     }
   }, [isAuthenticated]);
 
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordChangeStatus, setPasswordChangeStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [passwordChangeMessage, setPasswordChangeMessage] = useState('');
+
+  const handlePasswordChange = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordChangeStatus('idle');
+    setPasswordChangeMessage('');
+
+    const cleanNewPass = newPassword.trim();
+    const cleanConfirmPass = confirmPassword.trim();
+
+    if (cleanNewPass.length < 6) {
+      setPasswordChangeStatus('error');
+      setPasswordChangeMessage('A nova senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+
+    if (cleanNewPass !== cleanConfirmPass) {
+      setPasswordChangeStatus('error');
+      setPasswordChangeMessage('As senhas não coincidem.');
+      return;
+    }
+
+    try {
+      localStorage.setItem('admin_custom_password', cleanNewPass);
+      setPasswordChangeStatus('success');
+      setPasswordChangeMessage('Sua senha personalizada foi configurada e salva com segurança!');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setPasswordChangeStatus('error');
+      setPasswordChangeMessage('Erro ao salvar no armazenamento local do navegador.');
+    }
+  };
+
+  const handleResetPassword = () => {
+    if (window.confirm('Tem certeza que deseja apagar sua senha personalizada e restaurar a senha mestra padrão?')) {
+      localStorage.removeItem('admin_custom_password');
+      setPasswordChangeStatus('success');
+      setPasswordChangeMessage('A senha personalizada foi removida. Apenas a Senha Mestra padrão está ativa agora.');
+      setNewPassword('');
+      setConfirmPassword('');
+    }
+  };
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
@@ -41,11 +88,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, onResend }) => 
     const cleanEmail = email.trim().toLowerCase();
     const cleanPassword = password.trim();
 
+    // Senha padrão segura de fábrica
+    const defaultMasterPassword = 'Wellington@AlugaGoias2026#';
+    
+    // Obter senha personalizada se houver no localStorage
+    const customPassword = localStorage.getItem('admin_custom_password') || '';
+
     // Wellington ou administrador podem acessar
-    if (
-      (cleanEmail === 'wellington.rodovalho@gmail.com' || cleanEmail === 'admin@alugagoias.com.br' || cleanEmail === 'admin') &&
-      (cleanPassword === 'alugagoias' || cleanPassword === 'admin' || cleanPassword === 'wellington2026')
-    ) {
+    const isUserAllowed = cleanEmail === 'wellington.rodovalho@gmail.com' || cleanEmail === 'admin@alugagoias.com.br' || cleanEmail === 'admin';
+    const isPasswordCorrect = cleanPassword === defaultMasterPassword || (customPassword && cleanPassword === customPassword);
+
+    if (isUserAllowed && isPasswordCorrect) {
       sessionStorage.setItem('admin_authenticated', 'true');
       setIsAuthenticated(true);
     } else {
@@ -158,7 +211,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, onResend }) => 
 
           <div className="pt-2 text-center">
             <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
-              Dica: use a senha <span className="text-slate-500 underline font-black">alugagoias</span>
+              Acesso protegido por Senha Mestra Segura ou sua Senha Personalizada.
             </p>
           </div>
         </form>
@@ -331,6 +384,82 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, onResend }) => 
           </p>
         </div>
       )}
+
+      {/* Password Change Section */}
+      <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-xl space-y-4">
+        <div className="border-b border-slate-100 pb-3">
+          <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+            <i className="fas fa-key text-amber-500"></i>
+            Segurança de Acesso (Nova Senha)
+          </h3>
+          <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">
+            Defina uma senha personalizada de alta segurança para bloquear o painel
+          </p>
+        </div>
+
+        <form onSubmit={handlePasswordChange} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block ml-1">Nova Senha</label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Mínimo de 6 caracteres"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-slate-200 transition-all placeholder:text-slate-300"
+                required
+              />
+            </div>
+            
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block ml-1">Confirmar Nova Senha</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Repita a nova senha"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-slate-200 transition-all placeholder:text-slate-300"
+                required
+              />
+            </div>
+          </div>
+
+          {passwordChangeStatus === 'success' && (
+            <div className="p-3 bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-xl flex items-center gap-2 text-[11px] font-bold">
+              <i className="fas fa-check-circle text-emerald-600"></i>
+              <span>{passwordChangeMessage}</span>
+            </div>
+          )}
+
+          {passwordChangeStatus === 'error' && (
+            <div className="p-3 bg-red-50 border border-red-100 text-red-800 rounded-xl flex items-center gap-2 text-[11px] font-bold">
+              <i className="fas fa-exclamation-circle text-red-600"></i>
+              <span>{passwordChangeMessage}</span>
+            </div>
+          )}
+
+          <div className="pt-2 flex flex-col sm:flex-row gap-3">
+            <button
+              type="submit"
+              className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] uppercase tracking-wider rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <i className="fas fa-save"></i>
+              Salvar Nova Senha
+            </button>
+            
+            {localStorage.getItem('admin_custom_password') && (
+              <button
+                type="button"
+                onClick={handleResetPassword}
+                className="py-3 px-4 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <i className="fas fa-trash-alt"></i>
+                Restaurar Padrão
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

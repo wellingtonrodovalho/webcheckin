@@ -6,11 +6,13 @@ import StepIndicator from './components/StepIndicator';
 import FileUpload from './components/FileUpload';
 import SelfieCapture from './components/SelfieCapture';
 import Logo from './components/Logo';
+import { AdminPanel } from './components/AdminPanel';
 
 const App: React.FC = () => {
   const [step, setStep] = useState<FormStep>(FormStep.CONSENT);
   const [loading, setLoading] = useState(false);
   const [isOtherReason, setIsOtherReason] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
   
   const [formData, setFormData] = useState<FullFormData>({
     reservation: {
@@ -222,7 +224,10 @@ const App: React.FC = () => {
       const dataToSave = { ...formData, companions: trimmedCompanions, propertyDetails: selectedProperty };
       
       const success = await saveToGoogleSheets(dataToSave);
-      if (success) setStep(FormStep.SUCCESS);
+      if (success) {
+        localStorage.setItem('last_successful_submission', JSON.stringify(dataToSave));
+        setStep(FormStep.SUCCESS);
+      }
       else alert("Erro ao salvar. Tente novamente.");
     } catch (error) {
       alert("Erro de conexão.");
@@ -238,13 +243,29 @@ const App: React.FC = () => {
           <Logo className="w-10 h-10" />
           <h1 className="font-black text-slate-800 text-sm uppercase leading-tight">WELLINGTON RODOVALHO<br/><span className="text-blue-600 text-[10px]">CORRETOR DE IMÓVEIS</span></h1>
         </div>
-        <div className="text-[10px] font-bold text-slate-400 text-right uppercase">CRECI: GO 42695</div>
+        <div className="flex items-center gap-3">
+          <div className="text-[10px] font-bold text-slate-400 text-right uppercase">CRECI: GO 42695</div>
+          <button 
+            onClick={() => setShowAdmin(true)} 
+            className="p-1.5 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+            title="Painel do Administrador"
+          >
+            <i className="fas fa-lock text-sm"></i>
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 w-full max-w-2xl mx-auto px-4 mt-6">
-        {step > FormStep.CONSENT && step !== FormStep.SUCCESS && <StepIndicator currentStep={step} petAllowed={isPetAllowedProperty} />}
+        {showAdmin ? (
+          <AdminPanel 
+            onClose={() => setShowAdmin(false)} 
+            onResend={saveToGoogleSheets} 
+          />
+        ) : (
+          <>
+            {step > FormStep.CONSENT && step !== FormStep.SUCCESS && <StepIndicator currentStep={step} petAllowed={isPetAllowedProperty} />}
 
-        <div className="bg-white rounded-3xl shadow-xl p-6 sm:p-10">
+            <div className="bg-white rounded-3xl shadow-xl p-6 sm:p-10">
           
           {step === FormStep.CONSENT && (
             <div className="space-y-6 text-center py-4">
@@ -772,7 +793,9 @@ const App: React.FC = () => {
               <button onClick={() => window.location.reload()} className="px-12 py-5 bg-slate-800 text-white font-black rounded-2xl shadow-xl active:scale-95 transition-all">NOVO CADASTRO</button>
             </div>
           )}
-        </div>
+            </div>
+          </>
+        )}
       </main>
 
       <footer className="w-full max-w-2xl mx-auto px-4 py-8 mt-auto border-t border-slate-200">
@@ -782,6 +805,13 @@ const App: React.FC = () => {
             <span>CAEPF: 269.462.701/001-49</span>
             <span>CRECI: CRECI-GO 42695</span>
             <span>CNAI: 54826</span>
+            <span>|</span>
+            <button 
+              onClick={() => setShowAdmin(true)} 
+              className="hover:text-slate-800 hover:underline transition-all cursor-pointer font-black"
+            >
+              Área do Administrador
+            </button>
           </div>
           <div className="pt-4 flex flex-col items-center gap-2">
             <a href="https://www.alugagoias.com.br" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold text-xs hover:underline flex items-center gap-2">

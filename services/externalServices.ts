@@ -23,129 +23,149 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
   doc.rect(0, 0, 210, 297, 'F');
 
   // --- 1. CABEÇALHO ---
-  // Logo: Aluga Goiás (Árvore estilizada)
-  doc.setDrawColor(47, 47, 47);
-  doc.setLineWidth(1);
+  // Logo: Aluga Goiás (Árvore estilizada elegante com cores corretas)
+  doc.setDrawColor(60, 50, 40); // Marrom escuro sofisticado
+  doc.setLineWidth(0.8);
   // Tronco
-  doc.line(18, 14, 18, 28);
-  // Galhos
-  doc.line(18, 22, 13, 18);
-  doc.line(18, 20, 23, 16);
-  // Folhas (Círculos)
-  doc.setFillColor(47, 47, 47);
-  doc.ellipse(13, 18, 1, 1, 'F');
-  doc.ellipse(23, 16, 1, 1, 'F');
-  doc.ellipse(18, 14, 1, 1, 'F');
+  doc.line(16, 14, 16, 26);
+  // Galhos simétricos
+  doc.line(16, 21, 12, 17);
+  doc.line(16, 19, 20, 15);
+  
+  // Folhas em Dourado elegante
+  doc.setFillColor(194, 159, 104); // Dourado
+  doc.setDrawColor(194, 159, 104);
+  doc.ellipse(12, 17, 1.2, 1.2, 'F');
+  doc.ellipse(20, 15, 1.2, 1.2, 'F');
+  doc.ellipse(16, 13, 1.5, 1.5, 'F'); // Copa do topo
 
   // Texto Logo
-  doc.setTextColor(47, 47, 47);
+  doc.setTextColor(60, 50, 40);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(28);
-  doc.text("Aluga", 27, 21);
+  doc.setFontSize(24);
+  doc.text("Aluga", 25, 21);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(14);
-  doc.text("Goiás", 27, 27);
+  doc.setFontSize(12);
+  doc.text("Goiás", 25, 26);
 
-  // Endereço / Contatos do Escritório
+  // Endereço correto do Imóvel Reservado no Cabeçalho Central
+  const propertyAddress = data.propertyDetails?.address || "Rua T-45, 61, Ap 101B, Setor Bueno, Goiânia-GO";
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
-  doc.setTextColor(60, 60, 60);
-  doc.text("Rua T-45, 61, Apartamento 101B, Edifício Studio", 75, 14, { align: "center" });
-  doc.text("45, Setor Bueno, Goiânia - GO, CEP 74210-160", 75, 17.5, { align: "center" });
-  doc.text("www.alugagoias.com.br", 75, 21, { align: "center" });
+  doc.setTextColor(80, 80, 80);
+  
+  // Dividir o endereço para caber perfeitamente no espaço sem quebras brutas
+  const addressLines = doc.splitTextToSize(propertyAddress, 64);
+  let currentHeaderY = 12;
+  
+  addressLines.forEach((line: string) => {
+    doc.text(line, 86, currentHeaderY, { align: "center" });
+    currentHeaderY += 3.5;
+  });
+  
+  // Adicionar URL com estilo limpo
+  doc.text("www.alugagoias.com.br", 86, currentHeaderY, { align: "center" });
+  currentHeaderY += 3.5;
+  
+  // Adicionar WhatsApp destacado em negrito
   doc.setFont("helvetica", "bold");
-  doc.text("WhatsApp: (62) 98555-1980", 75, 25, { align: "center" });
+  doc.text("WhatsApp: (62) 98555-1980", 86, currentHeaderY, { align: "center" });
 
   // Card Topo Direito: Data da Autorização
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(125, 10, 75, 18, 4, 4, 'F');
+  doc.roundedRect(125, 10, 75, 18, 3, 3, 'F');
   
-  doc.setTextColor(47, 47, 47);
+  doc.setTextColor(120, 120, 120);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
   doc.text("DATA DA AUTORIZAÇÃO:", 130, 15);
   
   const dateObj = new Date();
   const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
   const formattedDate = `Goiânia, ${dateObj.toLocaleDateString('pt-BR', options)}.`;
   
+  doc.setTextColor(47, 47, 47);
   doc.setFont("helvetica", "italic");
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.text(formattedDate, 130, 22);
 
   // --- 2. FILEIRA DE INFORMAÇÕES (PROPRIETÁRIA, CHECK-IN, EMERGÊNCIA) ---
-  const cardY = 31;
-  const cardH = 20;
+  const cardY = 32;
+  const cardH = 19;
 
   // Card 1: Proprietária
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(10, cardY, 53, cardH, 4, 4, 'F');
+  doc.roundedRect(10, cardY, 53, cardH, 3, 3, 'F');
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(120, 120, 120);
   doc.text("PROPRIETÁRIA", 14, cardY + 5);
   
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(47, 47, 47);
   const ownerName = (data.propertyDetails?.ownerName || "ROSIANI IPOLITA LEÃO").toUpperCase();
-  doc.text(ownerName, 14, cardY + 12, { maxWidth: 45 });
+  doc.setTextColor(47, 47, 47);
+  doc.setFont("helvetica", "bold");
+  const ownerFontSize = ownerName.length > 25 ? 8 : 9;
+  doc.setFontSize(ownerFontSize);
+  doc.text(ownerName, 14, cardY + 11, { maxWidth: 45 });
 
   // Card 2: Check-in / Checkout
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(66, cardY, 73, cardH, 4, 4, 'F');
+  doc.roundedRect(66, cardY, 73, cardH, 3, 3, 'F');
   
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(120, 120, 120);
-  doc.text("CHECK-IN", 70, cardY + 5);
-  doc.text("CHECKOUT", 112, cardY + 5);
+  doc.text("CHECK-IN", 71, cardY + 5);
+  doc.text("CHECKOUT", 110, cardY + 5);
   
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
+  doc.setFontSize(10.5);
   doc.setTextColor(47, 47, 47);
-  doc.text(data.reservation.startDate, 70, cardY + 13);
-  doc.text("-", 102, cardY + 13);
-  doc.text(data.reservation.endDate, 112, cardY + 13);
+  doc.text(data.reservation.startDate, 71, cardY + 12);
+  doc.text("-", 101, cardY + 12);
+  doc.text(data.reservation.endDate, 110, cardY + 12);
 
   // Card 3: Contato de Emergência
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(142, cardY, 58, cardH, 4, 4, 'F');
+  doc.roundedRect(142, cardY, 58, cardH, 3, 3, 'F');
   
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(120, 120, 120);
   doc.text("CONTATO DE EMERGÊNCIA", 146, cardY + 5);
   
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
   doc.setTextColor(47, 47, 47);
-  const emerName = data.mainGuest.emergencyContactName || "Não Informado";
+  const emerName = (data.mainGuest.emergencyContactName || "Não Informado").toUpperCase();
   const emerPhone = data.mainGuest.emergencyContactPhone || "";
   const emerRel = data.mainGuest.emergencyContactRelationship ? `(${data.mainGuest.emergencyContactRelationship})` : "";
-  doc.text(`${emerName}\n${emerPhone} ${emerRel}`, 146, cardY + 11, { maxWidth: 50 });
+  
+  doc.text(emerName, 146, cardY + 10, { maxWidth: 50 });
+  doc.setFont("helvetica", "normal");
+  doc.text(`${emerPhone} ${emerRel}`, 146, cardY + 14, { maxWidth: 50 });
 
   // --- 3. TABELA DE HÓSPEDES ---
-  const tableY = 54;
-  const tableH = 100;
+  const tableY = 55;
+  const tableH = 96;
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(10, tableY, 190, tableH, 4, 4, 'F');
+  doc.roundedRect(10, tableY, 190, tableH, 3, 3, 'F');
 
   // Título da Tabela
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.setTextColor(120, 120, 120);
   doc.text("HÓSPEDES", 105, tableY + 5, { align: "center" });
 
   // Linha dourada sob o título
-  doc.setDrawColor(194, 159, 104);
+  doc.setDrawColor(212, 188, 149);
   doc.setLineWidth(0.4);
   doc.line(10, tableY + 7, 200, tableY + 7);
 
   // Cabeçalhos das Colunas
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8.5);
-  doc.setTextColor(47, 47, 47);
+  doc.setFontSize(8);
+  doc.setTextColor(120, 120, 120);
   doc.text("NOME", 12, tableY + 12);
   doc.text("TELEFONE", 72, tableY + 12);
   doc.text("CPF", 102, tableY + 12);
@@ -159,19 +179,25 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
   // Definindo as larguras de colunas: NOME (60), TELEFONE (30), CPF (30), RG (25), EMAIL (45)
   // Total usable width = 190.
   // Desenhar as linhas das colunas verticais
-  doc.line(70, tableY + 7, 70, tableY + 97);   // depois de NOME
-  doc.line(100, tableY + 7, 100, tableY + 97); // depois de TELEFONE
-  doc.line(130, tableY + 7, 130, tableY + 97); // depois de CPF
-  doc.line(155, tableY + 7, 155, tableY + 97); // depois de RG
+  doc.setDrawColor(230, 215, 190); // Tom de bege/dourado bem suave e sofisticado
+  doc.setLineWidth(0.3);
+  doc.line(70, tableY + 7, 70, tableY + tableH - 3);   // depois de NOME
+  doc.line(100, tableY + 7, 100, tableY + tableH - 3); // depois de TELEFONE
+  doc.line(130, tableY + 7, 130, tableY + tableH - 3); // depois de CPF
+  doc.line(155, tableY + 7, 155, tableY + tableH - 3); // depois de RG
 
-  // Desenhar linhas das linhas horizontais (9 linhas para 8 rows)
-  for (let i = 1; i <= 9; i++) {
-    const rowLineY = tableY + 14 + (i * 9);
-    doc.line(10, rowLineY, 200, rowLineY);
+  // Desenhar linhas das linhas horizontais
+  const rowHeight = 8.5;
+  const numRows = 9;
+  for (let i = 1; i <= numRows; i++) {
+    const rowLineY = tableY + 14 + (i * rowHeight);
+    if (rowLineY < tableY + tableH) {
+      doc.line(10, rowLineY, 200, rowLineY);
+    }
   }
 
   // Preencher os dados dos hóspedes
-  const guestsList = [];
+  const guestsList: Array<{name: string, phone: string, cpf: string, rg: string, email: string}> = [];
   // Titular
   guestsList.push({
     name: (data.mainGuest.fullName || "").toUpperCase(),
@@ -193,8 +219,9 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
 
   // Desenhar textos
   doc.setFontSize(8);
-  for (let i = 0; i < 9; i++) {
-    const rowY = tableY + 14 + (i * 9);
+  doc.setTextColor(47, 47, 47);
+  for (let i = 0; i < numRows; i++) {
+    const rowY = tableY + 14 + (i * rowHeight);
     const guest = guestsList[i];
     if (guest) {
       doc.setFont("helvetica", "bold");
@@ -208,85 +235,85 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
   }
 
   // --- 4. SEÇÃO INFERIOR: OBSERVAÇÕES & VEÍCULO ---
-  const bottomY = 157;
-  const bottomH = 45;
+  const bottomY = 156;
+  const bottomH = 43;
 
   // Box Observações
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(10, bottomY, 130, bottomH, 4, 4, 'F');
+  doc.roundedRect(10, bottomY, 130, bottomH, 3, 3, 'F');
   
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
+  doc.setFontSize(9);
   doc.setTextColor(120, 120, 120);
-  doc.text("OBSERVAÇÕES", 14, bottomY + 6);
+  doc.text("OBSERVAÇÕES", 14, bottomY + 5.5);
   
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
   doc.setTextColor(47, 47, 47);
   
   // Detalhes do imóvel
   doc.setFont("helvetica", "bold");
-  doc.text("Imóvel: ", 14, bottomY + 13);
+  doc.text("Imóvel: ", 14, bottomY + 12);
   doc.setFont("helvetica", "normal");
   const propertyName = data.propertyDetails?.name || "N/A";
-  doc.text(propertyName, 26, bottomY + 13, { maxWidth: 110 });
+  doc.text(propertyName, 25, bottomY + 12, { maxWidth: 110 });
   
   // Check-in / Checkout times
   doc.setFont("helvetica", "bold");
-  doc.text("Horário de check-in: ", 14, bottomY + 20);
+  doc.text("Horário de check-in: ", 14, bottomY + 18);
   doc.setFont("helvetica", "normal");
-  doc.text("Depois das 14 horas", 44, bottomY + 20);
+  doc.text("Depois das 14 horas", 42, bottomY + 18);
   
   doc.setFont("helvetica", "bold");
-  doc.text("Horário de check-out: ", 14, bottomY + 26);
+  doc.text("Horário de check-out: ", 14, bottomY + 24);
   doc.setFont("helvetica", "normal");
-  doc.text("Até as 11 horas", 45, bottomY + 26);
+  doc.text("Até as 11 horas", 43, bottomY + 24);
   
   // Notas e Pet se houver
   doc.setFont("helvetica", "bold");
-  doc.text("Observações: ", 14, bottomY + 32);
+  doc.text("Observações: ", 14, bottomY + 30);
   doc.setFont("helvetica", "normal");
   
   let obsStr = data.reservation.reasonForVisit || "";
   if (data.pet.hasPet) {
     obsStr += ` (Possui Pet: ${data.pet.name || "N/A"} - ${data.pet.breed || "N/A"})`;
   }
-  doc.text(obsStr || "Nenhuma observação informada.", 34, bottomY + 32, { maxWidth: 100 });
+  doc.text(obsStr || "Nenhuma observação informada.", 34, bottomY + 30, { maxWidth: 100 });
 
   // Box Veículo
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(143, bottomY, 57, bottomH, 4, 4, 'F');
+  doc.roundedRect(143, bottomY, 57, bottomH, 3, 3, 'F');
   
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
+  doc.setFontSize(9);
   doc.setTextColor(120, 120, 120);
-  doc.text("VEÍCULO", 147, bottomY + 6);
+  doc.text("VEÍCULO", 147, bottomY + 5.5);
   
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
   doc.setTextColor(47, 47, 47);
   
   if (data.reservation.hasVehicle) {
     doc.setFont("helvetica", "bold");
-    doc.text("Marca: ", 147, bottomY + 13);
+    doc.text("Marca: ", 147, bottomY + 12);
     doc.setFont("helvetica", "normal");
-    doc.text(data.reservation.vehicleBrand || "N/A", 158, bottomY + 13);
+    doc.text(data.reservation.vehicleBrand || "N/A", 158, bottomY + 12);
     
     doc.setFont("helvetica", "bold");
-    doc.text("Modelo: ", 147, bottomY + 20);
+    doc.text("Modelo: ", 147, bottomY + 18);
     doc.setFont("helvetica", "normal");
-    doc.text(data.reservation.vehicleModel || "N/A", 160, bottomY + 20);
+    doc.text(data.reservation.vehicleModel || "N/A", 160, bottomY + 18);
 
     doc.setFont("helvetica", "bold");
-    doc.text("Cor: ", 147, bottomY + 27);
+    doc.text("Cor: ", 147, bottomY + 24);
     doc.setFont("helvetica", "normal");
-    doc.text(data.reservation.vehicleColor || "N/A", 155, bottomY + 27);
+    doc.text(data.reservation.vehicleColor || "N/A", 155, bottomY + 24);
     
     doc.setFont("helvetica", "bold");
-    doc.text("Placa: ", 147, bottomY + 34);
+    doc.text("Placa: ", 147, bottomY + 30);
     doc.setFont("helvetica", "normal");
-    doc.text((data.reservation.vehiclePlate || "N/A").toUpperCase(), 158, bottomY + 34);
+    doc.text((data.reservation.vehiclePlate || "N/A").toUpperCase(), 158, bottomY + 30);
   } else {
     doc.setFont("helvetica", "normal");
-    doc.text("Nenhum veículo registrado para esta estadia.", 147, bottomY + 14, { maxWidth: 49 });
+    doc.text("Nenhum veículo registrado para esta estadia.", 147, bottomY + 12, { maxWidth: 49 });
   }
 
   const pdfOutput = doc.output('datauristring');

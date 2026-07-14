@@ -108,8 +108,19 @@ export const PROPERTIES: Property[] = [
     petAllowed: false,
     capacity: 8,
     welcomeLink: "https://boasvindasstudios.vercel.app/"
+  },
+  {
+    id: "9",
+    name: "Flat no Sun Square Praça do Sol Setor Oeste",
+    address: "Flat no Sun Square Praça do Sol Setor Oeste",
+    ownerName: "LEANDRO CARVALHAL FERREIRA",
+    ownerCpf: "",
+    ownerStatus: "",
+    ownerProfession: "",
+    petAllowed: false,
+    capacity: 4
   }
-];
+].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 
 export interface PetData {
   hasPet: boolean;

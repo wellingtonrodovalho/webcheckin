@@ -25,7 +25,7 @@ const App: React.FC = () => {
       vehicleModel: '',
       vehicleColor: '',
       vehiclePlate: '',
-      propertyId: '3',
+      propertyId: '',
       totalValue: 0,
       securityDepositValue: 0,
       hasSecurityDeposit: false,
@@ -100,6 +100,9 @@ const App: React.FC = () => {
         const isPetAllowed = targetProp ? targetProp.petAllowed : false;
         if (!isPetAllowed) {
           nextPet = { ...prev.pet, hasPet: false };
+        }
+        if (targetProp && prev.reservation.guestCount > targetProp.capacity) {
+          nextReservation.guestCount = targetProp.capacity;
         }
       }
 
@@ -294,9 +297,26 @@ const App: React.FC = () => {
                     onChange={handleReservationChange} 
                     className="bg-transparent border-none p-0 focus:ring-0 font-black text-blue-800 text-sm w-full cursor-pointer uppercase"
                   >
+                    <option value="" disabled>Selecione o imóvel conforme sua reserva</option>
                     {PROPERTIES.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
+
+                {!isPetAllowedProperty && (
+                  <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs font-bold text-amber-900 animate-in fade-in slide-in-from-top-2 flex gap-3 items-start">
+                    <div className="p-1 text-amber-600 flex-shrink-0">
+                      <i className="fas fa-info-circle text-lg"></i>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-black uppercase text-[10px] tracking-wider text-amber-800">Aviso Importante sobre Pets</p>
+                      <p className="font-bold leading-normal text-amber-700">
+                        {selectedProperty.id === "9" 
+                          ? "Não aceitamos animais de estimação (pets comuns). Cães de assistência são bem-vindos e têm acesso garantido por lei. Por favor, informe-nos no momento da reserva caso viaje com seu animal de serviço."
+                          : "Este imóvel não permite animais de estimação (pets comuns). Caso viaje com cão de assistência (animal de serviço), o acesso é garantido por lei; por favor, informe-nos."}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Origem da Reserva</label>
@@ -388,7 +408,7 @@ const App: React.FC = () => {
                 <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
                   <label className="text-[10px] font-black text-blue-600 uppercase mb-1 block">Hóspedes</label>
                   <select name="guestCount" value={formData.reservation.guestCount} onChange={handleReservationChange} className="bg-transparent border-none p-0 focus:ring-0 font-black text-blue-800 text-xl w-full">
-                    {Array.from({ length: Math.max(8, selectedProperty.capacity) }).map((_, i) => <option key={i+1} value={i+1}>{i+1} Pessoa(s)</option>)}
+                    {Array.from({ length: selectedProperty.capacity || 8 }).map((_, i) => <option key={i+1} value={i+1}>{i+1} Pessoa(s)</option>)}
                   </select>
                 </div>
 
@@ -431,7 +451,7 @@ const App: React.FC = () => {
                   )}
                 </div>
               </div>
-              <button onClick={nextStep} disabled={!formData.reservation.startDate || !formData.reservation.endDate || !formData.reservation.bookingSource || (isOtherReason && !formData.reservation.reasonForVisit.trim())} className="w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 active:scale-[0.98] transition-all">CONTINUAR</button>
+              <button onClick={nextStep} disabled={!formData.reservation.propertyId || !formData.reservation.startDate || !formData.reservation.endDate || !formData.reservation.bookingSource || (isOtherReason && !formData.reservation.reasonForVisit.trim())} className="w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 active:scale-[0.98] transition-all">CONTINUAR</button>
             </div>
           )}
 

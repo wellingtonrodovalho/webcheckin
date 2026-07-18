@@ -1,13 +1,16 @@
 
 import React, { useRef, useState, useEffect } from 'react';
+import { Language, TRANSLATIONS } from '../translations';
 
 interface SelfieCaptureProps {
   onCapture: (base64: string) => void;
   label: string;
   hint?: string;
+  lang?: Language;
 }
 
-const SelfieCapture: React.FC<SelfieCaptureProps> = ({ onCapture, label, hint }) => {
+const SelfieCapture: React.FC<SelfieCaptureProps> = ({ onCapture, label, hint, lang = 'pt' }) => {
+  const t = TRANSLATIONS[lang];
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -33,7 +36,7 @@ const SelfieCapture: React.FC<SelfieCaptureProps> = ({ onCapture, label, hint })
       setStream(mediaStream);
       setIsCapturing(true);
     } catch (err) {
-      alert("Permita o acesso à câmera.");
+      alert(t.compSelfieCameraPermission);
     }
   };
 
@@ -76,12 +79,12 @@ const SelfieCapture: React.FC<SelfieCaptureProps> = ({ onCapture, label, hint })
         ) : (
           <i className="fas fa-user-circle text-slate-700 text-5xl"></i>
         )}
-        {isCapturing && !isCameraReady && <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-[10px]">CARREGANDO...</div>}
+        {isCapturing && !isCameraReady && <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-[10px]">{t.compSelfieLoading}</div>}
       </div>
       <div className="flex justify-center mt-2">
-        {!isCapturing && !capturedImage && <button type="button" onClick={startCamera} className="text-[10px] font-black uppercase bg-blue-600 text-white px-4 py-2 rounded-lg">Abrir Câmera</button>}
+        {!isCapturing && !capturedImage && <button type="button" onClick={startCamera} className="text-[10px] font-black uppercase bg-blue-600 text-white px-4 py-2 rounded-lg">{t.compSelfieOpen}</button>}
         {isCapturing && <button type="button" onClick={capturePhoto} className="w-12 h-12 rounded-full border-4 border-white bg-blue-600 shadow-lg"></button>}
-        {capturedImage && <button type="button" onClick={() => {setCapturedImage(null); startCamera();}} className="text-[10px] font-black uppercase bg-slate-800 text-white px-4 py-2 rounded-lg">Refazer</button>}
+        {capturedImage && <button type="button" onClick={() => {setCapturedImage(null); startCamera();}} className="text-[10px] font-black uppercase bg-slate-800 text-white px-4 py-2 rounded-lg">{t.compSelfieRetake}</button>}
       </div>
       <canvas ref={canvasRef} className="hidden" />
     </div>

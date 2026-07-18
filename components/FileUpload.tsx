@@ -1,13 +1,16 @@
 
 import React, { useState } from 'react';
+import { Language, TRANSLATIONS } from '../translations';
 
 interface FileUploadProps {
   label: string;
   onFileSelect: (base64: string) => void;
   id: string;
+  lang?: Language;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
+const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id, lang = 'pt' }) => {
+  const t = TRANSLATIONS[lang];
   const [preview, setPreview] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [fileType, setFileType] = useState<'image' | 'pdf' | null>(null);
@@ -92,19 +95,19 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileSelect, id }) => {
           {isProcessing ? (
             <div className="flex flex-col items-center">
               <i className="fas fa-circle-notch fa-spin text-blue-500 text-2xl mb-2"></i>
-              <span className="text-slate-500 text-xs font-bold uppercase tracking-tighter">Processando arquivo...</span>
+              <span className="text-slate-500 text-xs font-bold uppercase tracking-tighter">{t.compUploadProcessing}</span>
             </div>
           ) : preview ? (
             <div className="flex flex-col items-center gap-1">
               <i className={`fas ${fileType === 'pdf' ? 'fa-file-pdf text-red-500' : 'fa-check-circle text-emerald-500'} text-2xl`}></i>
               <span className={`${fileType === 'pdf' ? 'text-red-700' : 'text-emerald-700'} font-black text-[10px] uppercase`}>
-                {fileType === 'pdf' ? 'PDF Anexado' : 'Imagem Pronta'}
+                {fileType === 'pdf' ? t.compUploadPdfAttached : t.compUploadImageReady}
               </span>
             </div>
           ) : (
             <div className="text-center p-4">
               <i className="fas fa-file-upload text-slate-400 text-3xl mb-2"></i>
-              <p className="text-slate-500 text-[10px] font-bold uppercase">PDF, JPEG ou PNG</p>
+              <p className="text-slate-500 text-[10px] font-bold uppercase">{t.compUploadAllowedTypes}</p>
             </div>
           )}
         </label>

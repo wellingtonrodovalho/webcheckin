@@ -1,19 +1,22 @@
 
 import React from 'react';
 import { FormStep } from '../types';
+import { Language, TRANSLATIONS } from '../translations';
 
 interface StepIndicatorProps {
   currentStep: FormStep;
   petAllowed?: boolean;
+  lang: Language;
 }
 
-const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, petAllowed = true }) => {
+const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, petAllowed = true, lang }) => {
+  const t = TRANSLATIONS[lang];
   const steps = [
-    { id: FormStep.RESERVATION, label: 'Reserva', icon: 'fa-calendar-check' },
-    { id: FormStep.MAIN_GUEST, label: 'Titular', icon: 'fa-user' },
-    ...(petAllowed ? [{ id: FormStep.PET_INFO, label: 'Pet', icon: 'fa-paw' }] : []),
-    { id: FormStep.COMPANIONS, label: 'Hóspedes', icon: 'fa-users' },
-    { id: FormStep.SUCCESS, label: 'Fim', icon: 'fa-check' },
+    { id: FormStep.RESERVATION, label: t.stepReservation, icon: 'fa-calendar-check' },
+    { id: FormStep.MAIN_GUEST, label: t.stepMainGuest, icon: 'fa-user' },
+    ...(petAllowed ? [{ id: FormStep.PET_INFO, label: t.stepPet, icon: 'fa-paw' }] : []),
+    { id: FormStep.COMPANIONS, label: t.stepCompanions, icon: 'fa-users' },
+    { id: FormStep.SUCCESS, label: t.stepFinish, icon: 'fa-check' },
   ];
 
   return (

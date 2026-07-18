@@ -7,8 +7,11 @@ import FileUpload from './components/FileUpload';
 import SelfieCapture from './components/SelfieCapture';
 import Logo from './components/Logo';
 import { AdminPanel } from './components/AdminPanel';
+import { Language, TRANSLATIONS } from './translations';
 
 const App: React.FC = () => {
+  const [lang, setLang] = useState<Language>('pt');
+  const t = TRANSLATIONS[lang];
   const [step, setStep] = useState<FormStep>(FormStep.CONSENT);
   const [loading, setLoading] = useState(false);
   const [isOtherReason, setIsOtherReason] = useState(false);
@@ -120,7 +123,7 @@ const App: React.FC = () => {
   const lookupCep = async (cepValue: string) => {
     const cleanCep = cepValue.replace(/\D/g, '');
     if (cleanCep.length !== 8) {
-      setCepError('CEP inválido (deve ter 8 dígitos)');
+      setCepError(t.guestZipError);
       return;
     }
     setSearchingCep(true);
@@ -129,7 +132,7 @@ const App: React.FC = () => {
       const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
       const data = await response.json();
       if (data.erro) {
-        setCepError('CEP não encontrado nos Correios');
+        setCepError(t.guestZipError);
       } else {
         setFormData(prev => {
           const updatedGuest = {
@@ -152,7 +155,7 @@ const App: React.FC = () => {
         });
       }
     } catch (err) {
-      setCepError('Erro ao buscar CEP');
+      setCepError(t.guestZipError);
     } finally {
       setSearchingCep(false);
     }
@@ -244,14 +247,27 @@ const App: React.FC = () => {
       <header className="bg-white border-b sticky top-0 z-50 shadow-sm px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
           <Logo className="w-10 h-10" />
-          <h1 className="font-black text-slate-800 text-sm uppercase leading-tight">WELLINGTON RODOVALHO<br/><span className="text-blue-600 text-[10px]">CORRETOR DE IMÓVEIS</span></h1>
+          <h1 className="font-black text-slate-800 text-sm uppercase leading-tight">{t.wellintonName}<br/><span className="text-blue-600 text-[10px]">{t.realtorSubtitle}</span></h1>
         </div>
         <div className="flex items-center gap-3">
-          <div className="text-[10px] font-bold text-slate-400 text-right uppercase">CRECI: GO 42695</div>
+          {/* Language Selector */}
+          <div className="relative inline-block text-left">
+            <select
+              value={lang}
+              onChange={(e) => setLang(e.target.value as Language)}
+              className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-[11px] font-black uppercase text-slate-700 cursor-pointer outline-none focus:ring-2 focus:ring-blue-100 transition-all hover:bg-slate-100"
+            >
+              <option value="pt">🇧🇷 PT</option>
+              <option value="en">🇺🇸 EN</option>
+              <option value="es">🇪🇸 ES</option>
+            </select>
+          </div>
+
+          <div className="text-[10px] font-bold text-slate-400 text-right uppercase hidden xs:block">{t.creci}</div>
           <button 
             onClick={() => setShowAdmin(true)} 
             className="p-1.5 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
-            title="Painel do Administrador"
+            title={t.adminPanel}
           >
             <i className="fas fa-lock text-sm"></i>
           </button>
@@ -266,38 +282,38 @@ const App: React.FC = () => {
           />
         ) : (
           <>
-            {step > FormStep.CONSENT && step !== FormStep.SUCCESS && <StepIndicator currentStep={step} petAllowed={isPetAllowedProperty} />}
+            {step > FormStep.CONSENT && step !== FormStep.SUCCESS && <StepIndicator currentStep={step} petAllowed={isPetAllowedProperty} lang={lang} />}
 
             <div className="bg-white rounded-3xl shadow-xl p-6 sm:p-10">
           
           {step === FormStep.CONSENT && (
             <div className="space-y-6 text-center py-4">
-              <h2 className="text-2xl font-black text-slate-800">Bem-vindo ao Check-in</h2>
+              <h2 className="text-2xl font-black text-slate-800">{t.consentTitle}</h2>
               <p className="text-slate-500 text-sm leading-relaxed">
-                Precisamos de algumas informações para a sua hospedagem. Se a sua reserva foi feita via <strong>alugagoias.com.br</strong> ou <strong>Booking.com</strong>, geraremos seu contrato de locação temporária. Se foi realizada pelo <strong>Airbnb</strong>, geraremos sua autorização de entrada.
+                {t.consentDesc}
               </p>
               <label className="flex items-center gap-4 p-5 bg-blue-50 rounded-2xl border border-blue-100 cursor-pointer text-left">
                 <input type="checkbox" checked={formData.lgpdConsent} onChange={(e) => setFormData(prev => ({ ...prev, lgpdConsent: e.target.checked }))} className="w-6 h-6 rounded text-blue-600" />
-                <span className="text-xs font-bold text-blue-900 uppercase">Autorizo o uso dos meus dados para fins contratuais (LGPD).</span>
+                <span className="text-xs font-bold text-blue-900 uppercase">{t.consentCheck}</span>
               </label>
-              <button onClick={nextStep} disabled={!formData.lgpdConsent} className="w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-lg disabled:opacity-30">INICIAR CADASTRO</button>
+              <button onClick={nextStep} disabled={!formData.lgpdConsent} className="w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-lg disabled:opacity-30">{t.consentButton}</button>
             </div>
           )}
 
           {step === FormStep.RESERVATION && (
             <div className="space-y-6 animate-in slide-in-from-right-4">
-              <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight border-b pb-2">1. Dados da Hospedagem</h2>
+              <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight border-b pb-2">{t.resTitle}</h2>
               <div className="grid gap-4">
                 <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 mb-2">
-                  <label className="text-[10px] font-black text-blue-600 uppercase mb-1 block tracking-widest">Imóvel da Reserva</label>
-                  <p className="text-[9px] text-blue-400 font-bold mb-2 italic">Selecione o imóvel conforme sua reserva</p>
+                  <label className="text-[10px] font-black text-blue-600 uppercase mb-1 block tracking-widest">{t.resPropertyLabel}</label>
+                  <p className="text-[9px] text-blue-400 font-bold mb-2 italic">{t.resPropertyPlaceholder}</p>
                   <select 
                     name="propertyId" 
                     value={formData.reservation.propertyId} 
                     onChange={handleReservationChange} 
                     className="bg-transparent border-none p-0 focus:ring-0 font-black text-blue-800 text-sm w-full cursor-pointer uppercase"
                   >
-                    <option value="" disabled>Selecione o imóvel conforme sua reserva</option>
+                    <option value="" disabled>{t.resPropertyPlaceholder}</option>
                     {PROPERTIES.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
@@ -308,19 +324,19 @@ const App: React.FC = () => {
                       <i className="fas fa-info-circle text-lg"></i>
                     </div>
                     <div className="space-y-1">
-                      <p className="font-black uppercase text-[10px] tracking-wider text-amber-800">Aviso Importante sobre Pets</p>
+                      <p className="font-black uppercase text-[10px] tracking-wider text-amber-800">{t.resPetWarningTitle}</p>
                       <p className="font-bold leading-normal text-amber-700">
                         {selectedProperty.id === "9" 
-                          ? "Não aceitamos animais de estimação (pets comuns). Cães de assistência são bem-vindos e têm acesso garantido por lei. Por favor, informe-nos no momento da reserva caso viaje com seu animal de serviço."
-                          : "Este imóvel não permite animais de estimação (pets comuns). Caso viaje com cão de assistência (animal de serviço), o acesso é garantido por lei; por favor, informe-nos."}
+                          ? t.resPetWarningSunSquare
+                          : t.resPetWarningOthers}
                       </p>
                     </div>
                   </div>
                 )}
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Origem da Reserva</label>
-                  <p className="text-[9px] text-blue-600 font-bold ml-1 mb-2 italic">* Onde você realizou a reserva?</p>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">{t.resSourceLabel}</label>
+                  <p className="text-[9px] text-blue-600 font-bold ml-1 mb-2 italic">{t.resSourceSub}</p>
                   <div className="flex flex-wrap gap-2">
                     {['Airbnb', 'Booking.com', 'alugagoias.com.br', 'Outros'].map(opt => (
                       <button
@@ -330,7 +346,7 @@ const App: React.FC = () => {
                         className={`px-4 py-2 rounded-xl border-2 text-[10px] font-bold uppercase transition-all ${
                           formData.reservation.bookingSource === opt 
                             ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm' 
-                            : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
+                             : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
                         }`}
                       >
                         {opt}
@@ -342,30 +358,37 @@ const App: React.FC = () => {
                 {formData.reservation.bookingSource && (
                   <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-xs font-bold text-emerald-800 animate-in fade-in slide-in-from-top-2">
                     {formData.reservation.bookingSource === 'Airbnb' ? (
-                      <p>✨ Como sua reserva foi feita pelo <strong>Airbnb</strong>, geraremos apenas a sua <strong>Autorização de Entrada</strong>.</p>
+                      <p>{t.resSourceAirbnbMessage}</p>
                     ) : (
-                      <p>✨ Como sua reserva foi feita pelo/a <strong>{formData.reservation.bookingSource}</strong>, geraremos o seu <strong>Contrato de Locação Temporária</strong>.</p>
+                      <p>{t.resSourceOtherMessage.replace('{source}', formData.reservation.bookingSource)}</p>
                     )}
                   </div>
                 )}
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Motivo da Viagem</label>
-                  <p className="text-[9px] text-blue-600 font-bold ml-1 mb-2 italic">* Clique no motivo da sua visita</p>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">{t.resReasonLabel}</label>
+                  <p className="text-[9px] text-blue-600 font-bold ml-1 mb-2 italic">{t.resReasonSub}</p>
                   <div className="flex flex-wrap gap-2">
-                    {['Férias/Lazer', 'Negócios', 'Saúde', 'Parentes/Amigos', 'Eventos', 'Outro'].map(opt => {
-                      const isSelected = opt === 'Outro' ? isOtherReason : (!isOtherReason && formData.reservation.reasonForVisit === opt);
+                    {[
+                      { key: 'Férias/Lazer', label: t.resReasonOptionVacation },
+                      { key: 'Negócios', label: t.resReasonOptionBusiness },
+                      { key: 'Saúde', label: t.resReasonOptionHealth },
+                      { key: 'Parentes/Amigos', label: t.resReasonOptionFriends },
+                      { key: 'Eventos', label: t.resReasonOptionEvents },
+                      { key: 'Outro', label: t.resReasonOptionOther }
+                    ].map(opt => {
+                      const isSelected = opt.key === 'Outro' ? isOtherReason : (!isOtherReason && formData.reservation.reasonForVisit === opt.key);
                       return (
                         <button
-                          key={opt}
+                          key={opt.key}
                           type="button"
                           onClick={() => {
-                            if (opt === 'Outro') {
+                            if (opt.key === 'Outro') {
                               setIsOtherReason(true);
                               setFormData(prev => ({ ...prev, reservation: { ...prev.reservation, reasonForVisit: '' } }));
                             } else {
                               setIsOtherReason(false);
-                              setFormData(prev => ({ ...prev, reservation: { ...prev.reservation, reasonForVisit: opt } }));
+                              setFormData(prev => ({ ...prev, reservation: { ...prev.reservation, reasonForVisit: opt.key } }));
                             }
                           }}
                           className={`px-4 py-2 rounded-xl border-2 text-[10px] font-bold uppercase transition-all ${
@@ -374,7 +397,7 @@ const App: React.FC = () => {
                               : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
                           }`}
                         >
-                          {opt}
+                          {opt.label}
                         </button>
                       );
                     })}
@@ -382,10 +405,10 @@ const App: React.FC = () => {
 
                   {isOtherReason && (
                     <div className="space-y-1 mt-2 animate-in fade-in slide-in-from-top-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Especifique o motivo</label>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">{t.resReasonOtherLabel}</label>
                       <input
                         type="text"
-                        placeholder="Digite o motivo da viagem"
+                        placeholder={t.resReasonOtherPlaceholder}
                         value={['Férias/Lazer', 'Negócios', 'Saúde', 'Parentes/Amigos', 'Eventos'].includes(formData.reservation.reasonForVisit) ? '' : formData.reservation.reasonForVisit}
                         onChange={(e) => setFormData(prev => ({ ...prev, reservation: { ...prev.reservation, reasonForVisit: e.target.value } }))}
                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold outline-none text-slate-700 placeholder-slate-400 focus:border-blue-500 focus:bg-white transition-all text-xs"
@@ -396,19 +419,19 @@ const App: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Entrada (Check-in)</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t.resCheckinLabel}</label>
                     <input type="date" name="startDate" value={formData.reservation.startDate} onChange={handleReservationChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold outline-none" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Saída (Check-out)</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t.resCheckoutLabel}</label>
                     <input type="date" name="endDate" value={formData.reservation.endDate} onChange={handleReservationChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold outline-none" />
                   </div>
                 </div>
 
                 <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                  <label className="text-[10px] font-black text-blue-600 uppercase mb-1 block">Hóspedes</label>
+                  <label className="text-[10px] font-black text-blue-600 uppercase mb-1 block">{t.resGuestsLabel}</label>
                   <select name="guestCount" value={formData.reservation.guestCount} onChange={handleReservationChange} className="bg-transparent border-none p-0 focus:ring-0 font-black text-blue-800 text-xl w-full">
-                    {Array.from({ length: selectedProperty.capacity || 8 }).map((_, i) => <option key={i+1} value={i+1}>{i+1} Pessoa(s)</option>)}
+                    {Array.from({ length: selectedProperty.capacity || 8 }).map((_, i) => <option key={i+1} value={i+1}>{i+1} {t.resGuestsUnit}</option>)}
                   </select>
                 </div>
 
@@ -422,81 +445,87 @@ const App: React.FC = () => {
                         onChange={handleReservationChange} 
                         className="w-5 h-5 rounded text-blue-600 focus:ring-blue-500" 
                       />
-                      <span className="text-sm font-bold text-slate-700">Virão de veículo próprio?</span>
+                      <span className="text-sm font-bold text-slate-700">{t.resVehicleLabel}</span>
                     </label>
                     <p className="text-[10px] text-slate-400 font-bold ml-8 italic uppercase leading-normal">
-                      * Opcional: Se não souber os dados do carro agora, pode deixar em branco e enviar o formulário normalmente.
+                      {t.resVehicleSub}
                     </p>
                   </div>
 
                   {formData.reservation.hasVehicle && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 animate-in fade-in slide-in-from-top-2">
                       <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Marca (Opcional)</label>
+                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">{t.resVehicleBrand}</label>
                         <input name="vehicleBrand" value={formData.reservation.vehicleBrand} onChange={handleReservationChange} placeholder="Ex: Toyota" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold" />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Modelo (Opcional)</label>
+                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">{t.resVehicleModel}</label>
                         <input name="vehicleModel" value={formData.reservation.vehicleModel} onChange={handleReservationChange} placeholder="Ex: Corolla" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold" />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Cor (Opcional)</label>
+                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">{t.resVehicleColor}</label>
                         <input name="vehicleColor" value={formData.reservation.vehicleColor} onChange={handleReservationChange} placeholder="Ex: Prata" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold" />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Placa (Opcional)</label>
+                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">{t.resVehiclePlate}</label>
                         <input name="vehiclePlate" value={formData.reservation.vehiclePlate} onChange={handleReservationChange} placeholder="ABC-1234" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold uppercase" />
                       </div>
                     </div>
                   )}
                 </div>
               </div>
-              <button onClick={nextStep} disabled={!formData.reservation.propertyId || !formData.reservation.startDate || !formData.reservation.endDate || !formData.reservation.bookingSource || (isOtherReason && !formData.reservation.reasonForVisit.trim())} className="w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 active:scale-[0.98] transition-all">CONTINUAR</button>
+              <button onClick={nextStep} disabled={!formData.reservation.propertyId || !formData.reservation.startDate || !formData.reservation.endDate || !formData.reservation.bookingSource || (isOtherReason && !formData.reservation.reasonForVisit.trim())} className="w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 active:scale-[0.98] transition-all">{t.continue}</button>
             </div>
           )}
 
           {step === FormStep.MAIN_GUEST && (
             <div className="space-y-6 animate-in slide-in-from-right-4">
-              <h2 className="text-lg font-black text-slate-800 uppercase border-b pb-2">2. Identificação do Titular</h2>
+              <h2 className="text-lg font-black text-slate-800 uppercase border-b pb-2">{t.guestTitle}</h2>
               <div className="grid gap-4">
-                <input name="fullName" value={formData.mainGuest.fullName} onChange={handleMainGuestChange} placeholder="NOME COMPLETO" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold uppercase placeholder:text-slate-300" />
+                <input name="fullName" value={formData.mainGuest.fullName} onChange={handleMainGuestChange} placeholder={t.guestFullName} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold uppercase placeholder:text-slate-300" />
                 
                 <div className="grid grid-cols-2 gap-4">
-                  <input name="cpf" value={formData.mainGuest.cpf} onChange={handleMainGuestChange} placeholder="CPF" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
-                  <input name="rg" value={formData.mainGuest.rg} onChange={handleMainGuestChange} placeholder="RG" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                  <input name="cpf" value={formData.mainGuest.cpf} onChange={handleMainGuestChange} placeholder={t.guestCpf} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                  <input name="rg" value={formData.mainGuest.rg} onChange={handleMainGuestChange} placeholder={t.guestRg} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
                 </div>
 
                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
-                  <label className="text-[10px] font-black text-slate-400 uppercase mb-1 block tracking-widest">Estado Civil</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase mb-1 block tracking-widest">{t.guestMaritalStatus}</label>
                   <select 
                     name="maritalStatus" 
                     value={formData.mainGuest.maritalStatus} 
                     onChange={handleMainGuestChange} 
                     className="bg-transparent border-none p-0 focus:ring-0 font-black text-slate-700 text-sm w-full cursor-pointer"
                   >
-                    <option value="">SELECIONE O ESTADO CIVIL</option>
-                    {['Solteiro(a)', 'Casado(a)', 'União Estável', 'Divorciado(a)', 'Viúvo(a)'].map(opt => (
-                      <option key={opt} value={opt}>{opt}</option>
+                    <option value="">{t.guestMaritalPlaceholder}</option>
+                    {[
+                      { key: 'Solteiro(a)', label: t.guestMaritalSingle },
+                      { key: 'Casado(a)', label: t.guestMaritalMarried },
+                      { key: 'União Estável', label: t.guestMaritalStable },
+                      { key: 'Divorciado(a)', label: t.guestMaritalDivorced },
+                      { key: 'Viúvo(a)', label: t.guestMaritalWidowed }
+                    ].map(opt => (
+                      <option key={opt.key} value={opt.key}>{opt.label}</option>
                     ))}
                   </select>
                 </div>
-                <input name="profession" value={formData.mainGuest.profession} onChange={handleMainGuestChange} placeholder="PROFISSÃO" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold uppercase" />
+                <input name="profession" value={formData.mainGuest.profession} onChange={handleMainGuestChange} placeholder={t.guestProfession} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold uppercase" />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input name="email" value={formData.mainGuest.email} onChange={handleMainGuestChange} placeholder="E-MAIL" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
-                  <input name="phone" value={formData.mainGuest.phone} onChange={handleMainGuestChange} placeholder="TELEFONE / WHATSAPP" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                  <input name="email" value={formData.mainGuest.email} onChange={handleMainGuestChange} placeholder={t.guestEmail} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+                  <input name="phone" value={formData.mainGuest.phone} onChange={handleMainGuestChange} placeholder={t.guestPhone} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
                 </div>
 
                 <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                     <span className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <i className="fas fa-map-marked-alt text-blue-600"></i> Endereço do Titular
+                      <i className="fas fa-map-marked-alt text-blue-600"></i> {t.guestAddressSection}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="md:col-span-2 space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">CEP</label>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t.guestZipCode}</label>
                       <div className="relative flex gap-2">
                         <input 
                           name="addressZipCode" 
@@ -517,7 +546,7 @@ const App: React.FC = () => {
                           className="px-4 bg-blue-600 hover:bg-blue-700 text-white font-black text-[10px] rounded-xl shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap uppercase"
                         >
                           {searchingCep ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-search"></i>}
-                          Buscar CEP
+                          {t.guestZipSearch}
                         </button>
                       </div>
                       {cepError && <span className="text-[10px] font-bold text-red-500 ml-1 block">{cepError}</span>}
@@ -526,7 +555,7 @@ const App: React.FC = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="md:col-span-3 space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Logradouro (Rua, Avenida, Praça, etc.) e Número</label>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t.guestAddressLine}</label>
                       <input 
                         name="addressStreet" 
                         value={formData.mainGuest.addressStreet || ''} 
@@ -536,7 +565,7 @@ const App: React.FC = () => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Complemento</label>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t.guestComplement}</label>
                       <input 
                         name="addressComplement" 
                         value={formData.mainGuest.addressComplement || ''} 
@@ -549,7 +578,7 @@ const App: React.FC = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Bairro</label>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t.guestDistrict}</label>
                       <input 
                         name="addressDistrict" 
                         value={formData.mainGuest.addressDistrict || ''} 
@@ -559,7 +588,7 @@ const App: React.FC = () => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Cidade e Estado</label>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t.guestCityState}</label>
                       <input 
                         name="addressCityState" 
                         value={formData.mainGuest.addressCityState || ''} 
@@ -572,33 +601,41 @@ const App: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                  <FileUpload id="doc_main" label="Doc. Identidade (Frente)" onFileSelect={handleUpload('main')} />
+                  <FileUpload id="doc_main" label={t.guestDocUpload} onFileSelect={handleUpload('main')} lang={lang} />
                   <SelfieCapture 
-                    label="Selfie do Titular" 
-                    hint="* Selfie com o documento de identidade (ambos visíveis)"
+                    label={t.guestSelfieLabel} 
+                    hint={t.guestSelfieHint}
                     onCapture={(base64) => setFormData(prev => ({ ...prev, mainGuest: { ...prev.mainGuest, selfieFile: base64 } }))} 
+                    lang={lang}
                   />
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-slate-100">
                   <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <i className="fas fa-phone-alt"></i> Contato de Emergência
+                    <i className="fas fa-phone-alt"></i> {t.guestEmergencyTitle}
                   </h3>
                   <div className="grid gap-3">
-                    <input name="emergencyContactName" value={formData.mainGuest.emergencyContactName} onChange={handleMainGuestChange} placeholder="NOME DO CONTATO" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-sm uppercase" />
+                    <input name="emergencyContactName" value={formData.mainGuest.emergencyContactName} onChange={handleMainGuestChange} placeholder={t.guestEmergencyName} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-sm uppercase" />
                     <div className="grid grid-cols-2 gap-3">
-                      <input name="emergencyContactPhone" value={formData.mainGuest.emergencyContactPhone} onChange={handleMainGuestChange} placeholder="CELULAR / WHATSAPP" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-sm" />
+                      <input name="emergencyContactPhone" value={formData.mainGuest.emergencyContactPhone} onChange={handleMainGuestChange} placeholder={t.guestEmergencyPhone} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-sm" />
                     <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
-                      <label className="text-[9px] font-black text-orange-600 uppercase mb-1 block tracking-widest">Parentesco</label>
+                      <label className="text-[9px] font-black text-orange-600 uppercase mb-1 block tracking-widest">{t.guestEmergencyRelationship}</label>
                       <select 
                         name="emergencyContactRelationship" 
                         value={formData.mainGuest.emergencyContactRelationship} 
                         onChange={handleMainGuestChange} 
                         className="bg-transparent border-none p-0 focus:ring-0 font-black text-orange-800 text-xs w-full cursor-pointer"
                       >
-                        <option value="">SELECIONE</option>
-                        {['Cônjuge', 'Filho(a)', 'Pai/Mãe', 'Irmão/Irmã', 'Amigo(a)', 'Outro'].map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
+                        <option value="">{t.guestEmergencyRelationshipSelect}</option>
+                        {[
+                          { key: 'Cônjuge', label: t.guestEmergencySpouse },
+                          { key: 'Filho(a)', label: t.guestEmergencyChild },
+                          { key: 'Pai/Mãe', label: t.guestEmergencyParents },
+                          { key: 'Irmão/Irmã', label: t.guestEmergencySibling },
+                          { key: 'Amigo(a)', label: t.guestEmergencyFriend },
+                          { key: 'Outro', label: t.guestEmergencyOther }
+                        ].map(opt => (
+                          <option key={opt.key} value={opt.key}>{opt.label}</option>
                         ))}
                       </select>
                     </div>
@@ -608,13 +645,13 @@ const App: React.FC = () => {
               </div>
 
               <div className="flex gap-4">
-                <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl text-slate-600">VOLTAR</button>
+                <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl text-slate-600">{t.back}</button>
                 <button 
                   onClick={nextStep} 
                   disabled={!formData.mainGuest.fullName || !formData.mainGuest.cpf || !formData.mainGuest.phone || !formData.mainGuest.documentFile || !formData.mainGuest.selfieFile || !formData.mainGuest.addressStreet || !formData.mainGuest.addressZipCode} 
                   className="flex-[2] py-4 bg-blue-600 text-white font-black rounded-xl disabled:opacity-30 transition-all animate-none"
                 >
-                  {isPetAllowedProperty ? 'PRÓXIMO: PET' : 'PRÓXIMO: HÓSPEDES'}
+                  {isPetAllowedProperty ? t.guestNextStepPet : t.guestNextStepCompanions}
                 </button>
               </div>
             </div>
@@ -623,8 +660,8 @@ const App: React.FC = () => {
           {step === FormStep.PET_INFO && (
             <div className="space-y-8 animate-in slide-in-from-right-4">
               <div className="text-center space-y-2">
-                <h2 className="text-2xl font-black text-slate-800">VOCÊ LEVARÁ PET?</h2>
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Informação obrigatória para o contrato</p>
+                <h2 className="text-2xl font-black text-slate-800">{t.petTitle}</h2>
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">{t.petSub}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-6">
@@ -636,7 +673,7 @@ const App: React.FC = () => {
                   <div className={`w-14 h-14 rounded-full flex items-center justify-center ${!formData.pet.hasPet ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}`}>
                     <i className="fas fa-times text-2xl"></i>
                   </div>
-                  <span className="font-black text-sm uppercase">NÃO LEVAREI</span>
+                  <span className="font-black text-sm uppercase">{t.petOptionNo}</span>
                 </button>
 
                 {isPetAllowedProperty ? (
@@ -648,7 +685,7 @@ const App: React.FC = () => {
                     <div className={`w-14 h-14 rounded-full flex items-center justify-center ${formData.pet.hasPet ? 'bg-orange-500 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}`}>
                       <i className="fas fa-dog text-2xl"></i>
                     </div>
-                    <span className="font-black text-sm uppercase">SIM, LEVAREI</span>
+                    <span className="font-black text-sm uppercase">{t.petOptionYes}</span>
                   </button>
                 ) : (
                   <div 
@@ -657,7 +694,7 @@ const App: React.FC = () => {
                     <div className="w-14 h-14 rounded-full flex items-center justify-center bg-red-100 text-red-500">
                       <i className="fas fa-ban text-2xl"></i>
                     </div>
-                    <span className="font-black text-xs text-red-600 uppercase">PET NÃO PERMITIDO NESTE IMÓVEL</span>
+                    <span className="font-black text-xs text-red-600 uppercase">{t.petNotAllowed}</span>
                   </div>
                 )}
               </div>
@@ -665,29 +702,34 @@ const App: React.FC = () => {
               {formData.pet.hasPet && (
                 <div className="space-y-4 p-6 bg-orange-50/50 border border-orange-100 rounded-3xl animate-in zoom-in-95">
                   <div className="p-4 bg-orange-100/50 rounded-2xl border border-orange-200">
-                    <label className="text-[10px] font-black text-orange-600 uppercase mb-1 block tracking-widest">Tipo de Pet</label>
+                    <label className="text-[10px] font-black text-orange-600 uppercase mb-1 block tracking-widest">{t.petTypeLabel}</label>
                     <select 
                       name="species" 
                       value={formData.pet.species} 
                       onChange={handlePetChange} 
                       className="bg-transparent border-none p-0 focus:ring-0 font-black text-orange-800 text-sm w-full cursor-pointer uppercase"
                     >
-                      {['Cão', 'Gato', 'Aves', 'Outros'].map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
+                      {[
+                        { key: 'Cão', label: t.petTypeDog },
+                        { key: 'Gato', label: t.petTypeCat },
+                        { key: 'Aves', label: t.petTypeBird },
+                        { key: 'Outros', label: t.petTypeOther }
+                      ].map(opt => (
+                        <option key={opt.key} value={opt.key}>{opt.label}</option>
                       ))}
                     </select>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <input name="name" value={formData.pet.name} onChange={handlePetChange} placeholder="NOME DO PET" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold uppercase" />
-                    <input name="breed" value={formData.pet.breed} onChange={handlePetChange} placeholder="RAÇA" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold uppercase" />
+                    <input name="name" value={formData.pet.name} onChange={handlePetChange} placeholder={t.petNamePlaceholder} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold uppercase" />
+                    <input name="breed" value={formData.pet.breed} onChange={handlePetChange} placeholder={t.petBreedPlaceholder} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold uppercase" />
                   </div>
-                  <FileUpload id="pet_vac" label="Carteira de Vacinação do Pet" onFileSelect={handleUpload('pet')} />
+                  <FileUpload id="pet_vac" label={t.petVaccineLabel} onFileSelect={handleUpload('pet')} lang={lang} />
                 </div>
               )}
 
               <div className="flex gap-4">
-                <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl text-slate-600">VOLTAR</button>
-                <button onClick={nextStep} className="flex-[2] py-4 bg-blue-600 text-white font-black rounded-xl">PRÓXIMO: HÓSPEDES</button>
+                <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-xl text-slate-600">{t.back}</button>
+                <button onClick={nextStep} className="flex-[2] py-4 bg-blue-600 text-white font-black rounded-xl">{t.guestNextStepCompanions}</button>
               </div>
             </div>
           )}
@@ -696,11 +738,11 @@ const App: React.FC = () => {
             <div className="space-y-6 animate-in slide-in-from-right-4">
               <div className="space-y-1">
                 <h2 className="text-lg font-black text-slate-800 uppercase border-b pb-2 flex justify-between items-center">
-                  3. Acompanhantes 
-                  <span className="text-blue-600 text-xs font-bold">{formData.reservation.guestCount - 1} Pendente(s)</span>
+                  {t.compTitle} 
+                  <span className="text-blue-600 text-xs font-bold">{formData.reservation.guestCount - 1} {t.compPendente}</span>
                 </h2>
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                  Você informou {formData.reservation.guestCount} hóspedes no total. Identifique os acompanhantes abaixo:
+                  {t.compSub.replace('{count}', formData.reservation.guestCount.toString())}
                 </p>
               </div>
 
@@ -709,13 +751,13 @@ const App: React.FC = () => {
                   {Array.from({ length: formData.reservation.guestCount - 1 }).map((_, idx) => (
                     <div key={idx} className="p-5 bg-slate-50 rounded-3xl border-2 border-slate-100 space-y-4 relative overflow-hidden">
                       <div className="absolute top-0 left-0 bg-blue-600 text-white text-[9px] font-black px-3 py-1 rounded-br-xl uppercase">
-                        Hóspede {idx + 2}
+                        {t.compGuestLabel} {idx + 2}
                       </div>
                       <div className="pt-4 grid gap-3">
                         <div className="space-y-1">
-                          <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Nome Completo</label>
+                          <label className="text-[9px] font-black text-slate-400 uppercase ml-1">{t.guestFullName}</label>
                           <input 
-                            placeholder="NOME COMPLETO DO ACOMPANHANTE" 
+                            placeholder={t.guestFullName} 
                             value={formData.companions[idx]?.name || ''} 
                             onChange={(e) => handleCompanionChange(idx, 'name', e.target.value)} 
                             className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold uppercase focus:ring-2 focus:ring-blue-100 outline-none placeholder:text-slate-300" 
@@ -724,9 +766,9 @@ const App: React.FC = () => {
                         
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1">
-                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1">CPF</label>
+                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1">{t.guestCpf}</label>
                             <input 
-                              placeholder="000.000.000-00" 
+                              placeholder={t.guestCpf} 
                               value={formData.companions[idx]?.cpf || ''} 
                               onChange={(e) => handleCompanionChange(idx, 'cpf', e.target.value)} 
                               className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-100 outline-none placeholder:text-slate-300" 
@@ -734,9 +776,9 @@ const App: React.FC = () => {
                           </div>
                           
                           <div className="space-y-1">
-                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1">RG</label>
+                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1">{t.guestRg}</label>
                             <input 
-                              placeholder="NÚMERO DO RG" 
+                              placeholder={t.guestRg} 
                               value={formData.companions[idx]?.rg || ''} 
                               onChange={(e) => handleCompanionChange(idx, 'rg', e.target.value)} 
                               className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold uppercase focus:ring-2 focus:ring-blue-100 outline-none placeholder:text-slate-300" 
@@ -746,10 +788,10 @@ const App: React.FC = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div className="space-y-1">
-                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1">E-mail</label>
+                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1">{t.guestEmail}</label>
                             <input 
                               type="email"
-                              placeholder="EMAIL DO ACOMPANHANTE" 
+                              placeholder={t.guestEmail} 
                               value={formData.companions[idx]?.email || ''} 
                               onChange={(e) => handleCompanionChange(idx, 'email', e.target.value)} 
                               className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-100 outline-none placeholder:text-slate-300" 
@@ -757,9 +799,9 @@ const App: React.FC = () => {
                           </div>
 
                           <div className="space-y-1">
-                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Celular / WhatsApp</label>
+                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1">{t.guestPhone}</label>
                             <input 
-                              placeholder="(00) 00000-0000" 
+                              placeholder={t.guestPhone} 
                               value={formData.companions[idx]?.phone || ''} 
                               onChange={(e) => handleCompanionChange(idx, 'phone', e.target.value)} 
                               className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-100 outline-none placeholder:text-slate-300" 
@@ -773,12 +815,12 @@ const App: React.FC = () => {
               ) : (
                 <div className="py-12 text-center text-slate-400 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
                   <i className="fas fa-user text-3xl mb-3 block opacity-20"></i>
-                  <p className="font-bold text-xs uppercase">Reserva Individual (Apenas o Titular)</p>
+                  <p className="font-bold text-xs uppercase">{t.compIndividualTitle} ({t.compIndividualText})</p>
                 </div>
               )}
 
               <div className="flex gap-4 pt-4">
-                <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-2xl text-slate-600">VOLTAR</button>
+                <button onClick={prevStep} className="flex-1 py-4 bg-slate-100 font-bold rounded-2xl text-slate-600">{t.back}</button>
                 <button 
                   onClick={finalizeProcess} 
                   disabled={loading || (formData.reservation.guestCount > 1 && Array.from({ length: formData.reservation.guestCount - 1 }).some((_, i) => {
@@ -788,7 +830,7 @@ const App: React.FC = () => {
                   className="flex-[2] py-4 bg-emerald-600 text-white font-black rounded-2xl shadow-xl shadow-emerald-100 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-30"
                 >
                   {loading ? <i className="fas fa-spinner fa-spin text-xl"></i> : <i className="fas fa-check-circle text-xl"></i>}
-                  {loading ? 'PROCESSANDO...' : 'FINALIZAR CHECK-IN'}
+                  {loading ? t.processing : t.compFinishButton}
                 </button>
               </div>
               
@@ -797,7 +839,7 @@ const App: React.FC = () => {
                 return !companion?.name || !companion?.rg || !companion?.cpf || !companion?.email || !companion?.phone;
               }) && (
                 <p className="text-[10px] text-red-500 font-black text-center uppercase animate-pulse">
-                  * Preencha os dados de todos os acompanhantes para continuar
+                  {t.compErrorAlert}
                 </p>
               )}
             </div>
@@ -807,10 +849,10 @@ const App: React.FC = () => {
             <div className="text-center py-12 space-y-6">
               <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner"><i className="fas fa-check"></i></div>
               <div className="space-y-2">
-                <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight">CADASTRO REALIZADO!</h2>
-                <p className="text-slate-500 text-sm">Os dados foram enviados e as imagens estão sendo processadas no Google Drive.</p>
+                <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight">{t.successTitle}</h2>
+                <p className="text-slate-500 text-sm">{t.successText}</p>
               </div>
-              <button onClick={() => window.location.reload()} className="px-12 py-5 bg-slate-800 text-white font-black rounded-2xl shadow-xl active:scale-95 transition-all">NOVO CADASTRO</button>
+              <button onClick={() => window.location.reload()} className="px-12 py-5 bg-slate-800 text-white font-black rounded-2xl shadow-xl active:scale-95 transition-all">{t.successButton}</button>
             </div>
           )}
             </div>
@@ -820,7 +862,7 @@ const App: React.FC = () => {
 
       <footer className="w-full max-w-2xl mx-auto px-4 py-8 mt-auto border-t border-slate-200">
         <div className="text-center space-y-2">
-          <p className="text-slate-800 font-black text-sm uppercase">Corretor de Imóveis: WELLINGTON RODOVALHO FONSECA</p>
+          <p className="text-slate-800 font-black text-sm uppercase">{t.realtorSubtitle}: WELLINGTON RODOVALHO FONSECA</p>
           <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
             <span>CAEPF: 269.462.701/001-49</span>
             <span>CRECI: CRECI-GO 42695</span>
@@ -830,7 +872,7 @@ const App: React.FC = () => {
               onClick={() => setShowAdmin(true)} 
               className="hover:text-slate-800 hover:underline transition-all cursor-pointer font-black"
             >
-              Área do Administrador
+              {t.adminPanel}
             </button>
           </div>
           <div className="pt-4 flex flex-col items-center gap-2">

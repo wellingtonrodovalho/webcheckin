@@ -251,16 +251,76 @@ const App: React.FC = () => {
         </div>
         <div className="flex items-center gap-3">
           {/* Language Selector */}
-          <div className="relative inline-block text-left">
-            <select
-              value={lang}
-              onChange={(e) => setLang(e.target.value as Language)}
-              className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-[11px] font-black uppercase text-slate-700 cursor-pointer outline-none focus:ring-2 focus:ring-blue-100 transition-all hover:bg-slate-100"
-            >
-              <option value="pt">🇧🇷 PT</option>
-              <option value="en">🇺🇸 EN</option>
-              <option value="es">🇪🇸 ES</option>
-            </select>
+          <div className="flex items-center gap-1.5">
+            {[
+              { 
+                code: 'pt', 
+                label: 'PT',
+                flag: (
+                  <svg viewBox="0 0 32 32" className="w-4 h-4 rounded-full overflow-hidden shadow-xs border border-black/10">
+                    <circle cx="16" cy="16" r="16" fill="#009c3b" />
+                    <polygon points="16,4 28,16 16,28 4,16" fill="#ffdf00" />
+                    <circle cx="16" cy="16" r="6" fill="#002776" />
+                  </svg>
+                )
+              },
+              { 
+                code: 'en', 
+                label: 'EN',
+                flag: (
+                  <svg viewBox="0 0 32 32" className="w-4 h-4 rounded-full overflow-hidden shadow-xs border border-black/10 bg-white">
+                    <rect x="0" y="0" width="32" height="32" fill="#fff" />
+                    <rect x="0" y="0" width="32" height="2.46" fill="#b22234" />
+                    <rect x="0" y="4.92" width="32" height="2.46" fill="#b22234" />
+                    <rect x="0" y="9.84" width="32" height="2.46" fill="#b22234" />
+                    <rect x="0" y="14.76" width="32" height="2.46" fill="#b22234" />
+                    <rect x="0" y="19.68" width="32" height="2.46" fill="#b22234" />
+                    <rect x="0" y="24.6" width="32" height="2.46" fill="#b22234" />
+                    <rect x="0" y="29.52" width="32" height="2.48" fill="#b22234" />
+                    <rect x="0" y="0" width="16" height="17.2" fill="#3c3b6e" />
+                    <circle cx="3" cy="3" r="0.7" fill="#fff" />
+                    <circle cx="7" cy="3" r="0.7" fill="#fff" />
+                    <circle cx="11" cy="3" r="0.7" fill="#fff" />
+                    <circle cx="5" cy="6" r="0.7" fill="#fff" />
+                    <circle cx="9" cy="6" r="0.7" fill="#fff" />
+                    <circle cx="3" cy="9" r="0.7" fill="#fff" />
+                    <circle cx="7" cy="9" r="0.7" fill="#fff" />
+                    <circle cx="11" cy="9" r="0.7" fill="#fff" />
+                    <circle cx="5" cy="12" r="0.7" fill="#fff" />
+                    <circle cx="9" cy="12" r="0.7" fill="#fff" />
+                    <circle cx="3" cy="15" r="0.7" fill="#fff" />
+                    <circle cx="7" cy="15" r="0.7" fill="#fff" />
+                    <circle cx="11" cy="15" r="0.7" fill="#fff" />
+                  </svg>
+                )
+              },
+              { 
+                code: 'es', 
+                label: 'ES',
+                flag: (
+                  <svg viewBox="0 0 32 32" className="w-4 h-4 rounded-full overflow-hidden shadow-xs border border-black/10">
+                    <rect x="0" y="0" width="32" height="8" fill="#c60b1e" />
+                    <rect x="0" y="8" width="32" height="16" fill="#ffc400" />
+                    <rect x="0" y="24" width="32" height="8" fill="#c60b1e" />
+                    <circle cx="10" cy="16" r="2" fill="#c60b1e" />
+                  </svg>
+                )
+              }
+            ].map(item => (
+              <button
+                key={item.code}
+                type="button"
+                onClick={() => setLang(item.code as Language)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[10px] font-black tracking-wider transition-all cursor-pointer ${
+                  lang === item.code 
+                    ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-100 scale-105' 
+                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {item.flag}
+                <span>{item.label}</span>
+              </button>
+            ))}
           </div>
 
           <div className="text-[10px] font-bold text-slate-400 text-right uppercase hidden xs:block">{t.creci}</div>

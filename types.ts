@@ -112,7 +112,7 @@ export const PROPERTIES: Property[] = [
   {
     id: "9",
     name: "Flat no Sun Square Praça do Sol Setor Oeste",
-    address: "Flat no Sun Square Praça do Sol Setor Oeste",
+    address: "Rua 9, 244, Flat 1205, Sun Square, Setor Oeste, Goiânia-GO, 74110-100",
     ownerName: "LEANDRO CARVALHAL FERREIRA",
     ownerCpf: "",
     ownerStatus: "",

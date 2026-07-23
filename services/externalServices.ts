@@ -18,58 +18,71 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
   // 1. Preparar o PDF com o template solicitado
   const doc = new jsPDF();
   
-  // Cor de fundo do canvas (Bege/Dourado suave do template)
-  doc.setFillColor(212, 188, 149); // #D4BC95
+  // Cor de fundo do canvas (Bege/Dourado suave e profissional do template)
+  doc.setFillColor(245, 242, 235); // #F5F2EB - off-white linho luxuoso e limpo para impressão
   doc.rect(0, 0, 210, 297, 'F');
 
   // --- 1. CABEÇALHO ---
-  // Logo: Aluga Goiás (Árvore estilizada elegante com cores corretas)
-  doc.setDrawColor(60, 50, 40); // Marrom escuro sofisticado
-  doc.setLineWidth(0.8);
-  // Tronco
-  doc.line(16, 14, 16, 26);
-  // Galhos simétricos
-  doc.line(16, 21, 12, 17);
-  doc.line(16, 19, 20, 15);
+  // Logo: Aluga Goiás (Árvore estilizada elegante que corresponde à imagem anexa)
+  doc.setDrawColor(83, 56, 22); // Marrom escuro sofisticado (#533816)
+  doc.setLineWidth(1.4);
+  doc.setLineCap('round');
   
-  // Folhas em Dourado elegante
-  doc.setFillColor(194, 159, 104); // Dourado
-  doc.setDrawColor(194, 159, 104);
-  doc.ellipse(12, 17, 1.2, 1.2, 'F');
-  doc.ellipse(20, 15, 1.2, 1.2, 'F');
-  doc.ellipse(16, 13, 1.5, 1.5, 'F'); // Copa do topo
+  // Tronco (vai até o centro da copa do topo)
+  doc.line(16, 29, 16, 14);
+  // Galhos simétricos para a esquerda e direita
+  doc.line(16, 23, 11, 18);
+  doc.line(16, 23, 21, 18);
+  
+  // Copas das árvores em Amarelo/Dourado vibrante (#F1B712)
+  doc.setFillColor(241, 183, 18);
+  doc.setDrawColor(241, 183, 18);
+  doc.ellipse(10.5, 18, 3.5, 3.5, 'F'); // Copa esquerda
+  doc.ellipse(21.5, 18, 3.5, 3.5, 'F'); // Copa direita
+  doc.ellipse(16, 13, 4.2, 4.2, 'F');   // Copa topo
 
   // Texto Logo
-  doc.setTextColor(60, 50, 40);
+  doc.setTextColor(83, 56, 22);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(24);
-  doc.text("Aluga", 25, 21);
+  doc.setFontSize(23);
+  doc.text("Aluga", 27, 21);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(12);
-  doc.text("Goiás", 25, 26);
+  doc.setFontSize(11);
+  doc.text("Goiás", 27, 26);
 
   // Endereço correto do Imóvel Reservado no Cabeçalho Central
-  const propertyAddress = data.propertyDetails?.address || "Rua T-45, 61, Ap 101B, Setor Bueno, Goiânia-GO";
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.setTextColor(80, 80, 80);
+  const rawAddress = data.propertyDetails?.address || "Rua T-45, 61, Ap 101B, Setor Bueno, Goiânia-GO";
+  const propertyAddress = `Endereço Completo do Imóvel:\n${rawAddress}`;
   
   // Dividir o endereço para caber perfeitamente no espaço sem quebras brutas
   const addressLines = doc.splitTextToSize(propertyAddress, 64);
-  let currentHeaderY = 12;
+  let currentHeaderY = 11;
   
-  addressLines.forEach((line: string) => {
+  addressLines.forEach((line: string, index: number) => {
+    if (index === 0) {
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(120, 120, 120);
+      doc.setFontSize(7.5);
+    } else {
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(47, 47, 47);
+      doc.setFontSize(7);
+    }
     doc.text(line, 86, currentHeaderY, { align: "center" });
     currentHeaderY += 3.5;
   });
   
   // Adicionar URL com estilo limpo
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  doc.setTextColor(83, 56, 22);
   doc.text("www.alugagoias.com.br", 86, currentHeaderY, { align: "center" });
   currentHeaderY += 3.5;
   
-  // Adicionar WhatsApp destacado em negrito
+  // Adicionar WhatsApp destacado em negrito (Novo número solicitado)
   doc.setFont("helvetica", "bold");
-  doc.text("WhatsApp: (62) 98555-1980", 86, currentHeaderY, { align: "center" });
+  doc.setTextColor(47, 47, 47);
+  doc.text("WhatsApp: 62 99151 4568", 86, currentHeaderY, { align: "center" });
 
   // Card Topo Direito: Data da Autorização
   doc.setFillColor(255, 255, 255);
@@ -80,50 +93,53 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
   doc.setFontSize(8);
   doc.text("DATA DA AUTORIZAÇÃO:", 130, 15);
   
+  // Formato dd/m/aaaa solicitado pelo usuário
   const dateObj = new Date();
-  const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-  const formattedDate = `Goiânia, ${dateObj.toLocaleDateString('pt-BR', options)}.`;
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  const month = dateObj.getMonth() + 1; // Mês sem zero à esquerda (1 a 12)
+  const year = dateObj.getFullYear();
+  const formattedDate = `${day}/${month}/${year}`;
   
   doc.setTextColor(47, 47, 47);
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(9.5);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
   doc.text(formattedDate, 130, 22);
 
-  // --- 2. FILEIRA DE INFORMAÇÕES (PROPRIETÁRIA, CHECK-IN, EMERGÊNCIA) ---
+  // --- 2. FILEIRA DE INFORMAÇÕES (PROPRIETÁRIO, CHECK-IN, EMERGÊNCIA) ---
   const cardY = 32;
   const cardH = 19;
 
-  // Card 1: Proprietária
+  // Card 1: Proprietário
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(10, cardY, 53, cardH, 3, 3, 'F');
+  doc.roundedRect(10, cardY, 73, cardH, 3, 3, 'F');
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.5);
   doc.setTextColor(120, 120, 120);
-  doc.text("PROPRIETÁRIA", 14, cardY + 5);
+  doc.text("PROPRIETÁRIO", 14, cardY + 5);
   
   const ownerName = (data.propertyDetails?.ownerName || "ROSIANI IPOLITA LEÃO").toUpperCase();
   doc.setTextColor(47, 47, 47);
   doc.setFont("helvetica", "bold");
-  const ownerFontSize = ownerName.length > 25 ? 8 : 9;
+  const ownerFontSize = ownerName.length > 30 ? 9 : 10.5;
   doc.setFontSize(ownerFontSize);
-  doc.text(ownerName, 14, cardY + 11, { maxWidth: 45 });
+  doc.text(ownerName, 14, cardY + 12, { maxWidth: 65 });
 
   // Card 2: Check-in / Checkout
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(66, cardY, 73, cardH, 3, 3, 'F');
+  doc.roundedRect(86, cardY, 53, cardH, 3, 3, 'F');
   
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.5);
   doc.setTextColor(120, 120, 120);
-  doc.text("CHECK-IN", 71, cardY + 5);
-  doc.text("CHECKOUT", 110, cardY + 5);
+  doc.text("CHECK-IN", 89, cardY + 5);
+  doc.text("CHECKOUT", 116, cardY + 5);
   
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10.5);
+  doc.setFontSize(10);
   doc.setTextColor(47, 47, 47);
-  doc.text(data.reservation.startDate, 71, cardY + 12);
-  doc.text("-", 101, cardY + 12);
-  doc.text(data.reservation.endDate, 110, cardY + 12);
+  doc.text(data.reservation.startDate, 89, cardY + 12);
+  doc.text("-", 111.5, cardY + 12);
+  doc.text(data.reservation.endDate, 116, cardY + 12);
 
   // Card 3: Contato de Emergência
   doc.setFillColor(255, 255, 255);
@@ -145,7 +161,7 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
   doc.setFont("helvetica", "normal");
   doc.text(`${emerPhone} ${emerRel}`, 146, cardY + 14, { maxWidth: 50 });
 
-  // --- 3. TABELA DE HÓSPEDES ---
+  // --- 3. TABELA DE USUÁRIOS ---
   const tableY = 55;
   const tableH = 96;
   doc.setFillColor(255, 255, 255);
@@ -155,10 +171,10 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   doc.setTextColor(120, 120, 120);
-  doc.text("HÓSPEDES", 105, tableY + 5, { align: "center" });
+  doc.text("USUÁRIOS", 105, tableY + 5, { align: "center" });
 
   // Linha dourada sob o título
-  doc.setDrawColor(212, 188, 149);
+  doc.setDrawColor(241, 183, 18);
   doc.setLineWidth(0.4);
   doc.line(10, tableY + 7, 200, tableY + 7);
 

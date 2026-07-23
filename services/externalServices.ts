@@ -12,6 +12,25 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
+const formatDateToDMY = (dateStr: string): string => {
+  if (!dateStr) return "N/A";
+  if (dateStr.includes("-")) {
+    const parts = dateStr.split("-");
+    if (parts.length === 3) {
+      const year = parts[0];
+      const month = parseInt(parts[1], 10).toString();
+      const day = parseInt(parts[2], 10).toString();
+      return `${day}/${month}/${year}`;
+    }
+  }
+  return dateStr;
+};
+
+const isFemaleOwner = (name: string): boolean => {
+  const upper = (name || "").toUpperCase();
+  return upper.includes("ROSIANI") || upper.includes("AMANDA") || upper.includes("CRISTIANE") || upper.includes("MARIA") || upper.includes("ANA");
+};
+
 export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> => {
   if (!GOOGLE_SHEETS_WEBAPP_URL) return false;
 
@@ -110,18 +129,19 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
   const cardH = 19;
 
   // Card 1: Proprietário
+  const ownerName = (data.propertyDetails?.ownerName || "ROSIANI IPOLITA LEÃO").toUpperCase();
+  const ownerLabel = isFemaleOwner(ownerName) ? "PROPRIETÁRIA" : "PROPRIETÁRIO";
+
   doc.setFillColor(255, 255, 255);
   doc.roundedRect(10, cardY, 73, cardH, 3, 3, 'F');
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.5);
   doc.setTextColor(120, 120, 120);
-  doc.text("PROPRIETÁRIO", 14, cardY + 5);
+  doc.text(ownerLabel, 14, cardY + 5);
   
-  const ownerName = (data.propertyDetails?.ownerName || "ROSIANI IPOLITA LEÃO").toUpperCase();
   doc.setTextColor(47, 47, 47);
   doc.setFont("helvetica", "bold");
-  const ownerFontSize = ownerName.length > 30 ? 9 : 10.5;
-  doc.setFontSize(ownerFontSize);
+  doc.setFontSize(8); // Same size as users
   doc.text(ownerName, 14, cardY + 12, { maxWidth: 65 });
 
   // Card 2: Check-in / Checkout
@@ -135,11 +155,11 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
   doc.text("CHECKOUT", 116, cardY + 5);
   
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.setTextColor(47, 47, 47);
-  doc.text(data.reservation.startDate, 89, cardY + 12);
-  doc.text("-", 111.5, cardY + 12);
-  doc.text(data.reservation.endDate, 116, cardY + 12);
+  doc.text(formatDateToDMY(data.reservation.startDate), 89, cardY + 12);
+  doc.text("-", 111, cardY + 12);
+  doc.text(formatDateToDMY(data.reservation.endDate), 115, cardY + 12);
 
   // Card 3: Contato de Emergência
   doc.setFillColor(255, 255, 255);
@@ -289,9 +309,9 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
   doc.text("Observações: ", 14, bottomY + 30);
   doc.setFont("helvetica", "normal");
   
-  let obsStr = data.reservation.reasonForVisit || "";
+  let obsStr = data.reservation.observations || "";
   if (data.pet.hasPet) {
-    obsStr += ` (Possui Pet: ${data.pet.name || "N/A"} - ${data.pet.breed || "N/A"})`;
+    obsStr += (obsStr ? " " : "") + `(Possui Pet: ${data.pet.name || "N/A"} - ${data.pet.breed || "N/A"})`;
   }
   doc.text(obsStr || "Nenhuma observação informada.", 34, bottomY + 30, { maxWidth: 100 });
 
@@ -344,11 +364,12 @@ DADOS DO IMÓVEL:
 - Endereço: ${data.propertyDetails?.address || 'N/A'}
 
 RESERVA:
-- Check-in: ${data.reservation.startDate}
-- Check-out: ${data.reservation.endDate}
+- Check-in: ${formatDateToDMY(data.reservation.startDate)}
+- Check-out: ${formatDateToDMY(data.reservation.endDate)}
 - Hóspedes: ${data.reservation.guestCount}
 - Origem da Reserva: ${data.reservation.bookingSource || 'N/A'}
 - Motivo: ${data.reservation.reasonForVisit}
+- Observações: ${data.reservation.observations || 'Nenhuma'}
 - Valor Total: ${formatCurrency(data.reservation.totalValue)}
 - Caução: ${formatCurrency(data.reservation.securityDepositValue || 0)}
 
@@ -398,9 +419,10 @@ ${data.companions.length > 0
     "Endereço do Imóvel": data.propertyDetails?.address || 'N/A',
     "Proprietário": data.propertyDetails?.ownerName || 'N/A',
     "CPF do Proprietário": data.propertyDetails?.ownerCpf || 'N/A',
-    "Check-in": data.reservation.startDate,
-    "Check-out": data.reservation.endDate,
+    "Check-in": formatDateToDMY(data.reservation.startDate),
+    "Check-out": formatDateToDMY(data.reservation.endDate),
     "Motivo da Viagem": data.reservation.reasonForVisit,
+    "Observações": data.reservation.observations || '',
     "Hóspedes": data.reservation.guestCount,
     "Origem da Reserva": data.reservation.bookingSource || 'N/A',
     "Veículo Próprio?": data.reservation.hasVehicle ? 'Sim' : 'Não',

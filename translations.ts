@@ -58,6 +58,8 @@ export interface TranslationDict {
   resVehicleModel: string;
   resVehicleColor: string;
   resVehiclePlate: string;
+  resObservationsLabel: string;
+  resObservationsPlaceholder: string;
 
   // Step 3: Main Guest Ident
   guestTitle: string;
@@ -138,6 +140,12 @@ export interface TranslationDict {
   compSelfieOpen: string;
   compSelfieRetake: string;
   compSelfieCameraPermission: string;
+  cameraNoCameraAlert: string;
+  cameraOptionA: string;
+  cameraOptionADesc: string;
+  cameraOptionB: string;
+  cameraOptionBDesc: string;
+  cameraOptionBButton: string;
 }
 
 export const TRANSLATIONS: Record<Language, TranslationDict> = {
@@ -157,7 +165,7 @@ export const TRANSLATIONS: Record<Language, TranslationDict> = {
     stepReservation: "Reserva",
     stepMainGuest: "Titular",
     stepPet: "Pet",
-    stepCompanions: "Hóspedes",
+    stepCompanions: "Ocupantes",
     stepFinish: "Fim",
 
     consentTitle: "Bem-vindo ao Check-in",
@@ -187,7 +195,7 @@ export const TRANSLATIONS: Record<Language, TranslationDict> = {
     resReasonOtherLabel: "Especifique o motivo",
     resCheckinLabel: "Entrada (Check-in)",
     resCheckoutLabel: "Saída (Check-out)",
-    resGuestsLabel: "Hóspedes",
+    resGuestsLabel: "Ocupantes",
     resGuestsUnit: "Pessoa(s)",
     resVehicleLabel: "Virão de veículo próprio?",
     resVehicleSub: "* Opcional: Se não souber os dados do carro agora, pode deixar em branco e enviar o formulário normalmente.",
@@ -195,6 +203,8 @@ export const TRANSLATIONS: Record<Language, TranslationDict> = {
     resVehicleModel: "Modelo (Opcional)",
     resVehicleColor: "Cor (Opcional)",
     resVehiclePlate: "Placa (Opcional)",
+    resObservationsLabel: "Observações (Opcional)",
+    resObservationsPlaceholder: "Escreva aqui alguma observação sobre sua estadia (ex: horário previsto de chegada, berço, etc.)",
 
     guestTitle: "2. Identificação do Titular",
     guestFullName: "NOME COMPLETO",
@@ -233,7 +243,7 @@ export const TRANSLATIONS: Record<Language, TranslationDict> = {
     guestEmergencyFriend: "Amigo(a)",
     guestEmergencyOther: "Outro",
     guestNextStepPet: "PRÓXIMO: PET",
-    guestNextStepCompanions: "PRÓXIMO: HÓSPEDES",
+    guestNextStepCompanions: "PRÓXIMO: OCUPANTES",
 
     petTitle: "VOCÊ LEVARÁ PET?",
     petSub: "Informação obrigatória para o contrato",
@@ -251,8 +261,8 @@ export const TRANSLATIONS: Record<Language, TranslationDict> = {
 
     compTitle: "3. Acompanhantes",
     compPendente: "Pendente(s)",
-    compSub: "Você informou {count} hóspedes no total. Identifique os acompanhantes abaixo:",
-    compGuestLabel: "Hóspede",
+    compSub: "Você informou {count} ocupantes no total. Identifique os acompanhantes abaixo:",
+    compGuestLabel: "Ocupante",
     compIndividualTitle: "Reserva Individual",
     compIndividualText: "Apenas o Titular",
     compFinishButton: "FINALIZAR CHECK-IN",
@@ -269,7 +279,13 @@ export const TRANSLATIONS: Record<Language, TranslationDict> = {
     compSelfieLoading: "CARREGANDO...",
     compSelfieOpen: "Abrir Câmera",
     compSelfieRetake: "Refazer",
-    compSelfieCameraPermission: "Permita o acesso à câmera."
+    compSelfieCameraPermission: "Permita o acesso à câmera.",
+    cameraNoCameraAlert: "Não detectamos uma câmera no seu dispositivo. Escolha uma das opções abaixo para enviar sua selfie com documento:",
+    cameraOptionA: "Opção A: Continuar no Celular via QR Code",
+    cameraOptionADesc: "Aponte a câmera do celular para o código QR abaixo para abrir este passo diretamente no seu smartphone:",
+    cameraOptionB: "Opção B: Upload de Arquivo",
+    cameraOptionBDesc: "Envie uma foto da sua selfie com documento previamente salva no computador:",
+    cameraOptionBButton: "Selecionar Imagem de Selfie"
   },
   en: {
     wellintonName: "WELLINGTON RODOVALHO",
@@ -287,7 +303,7 @@ export const TRANSLATIONS: Record<Language, TranslationDict> = {
     stepReservation: "Booking",
     stepMainGuest: "Main Guest",
     stepPet: "Pet",
-    stepCompanions: "Guests",
+    stepCompanions: "Occupants",
     stepFinish: "End",
 
     consentTitle: "Welcome to Check-in",
@@ -317,14 +333,16 @@ export const TRANSLATIONS: Record<Language, TranslationDict> = {
     resReasonOtherLabel: "Specify the reason",
     resCheckinLabel: "Check-in Date",
     resCheckoutLabel: "Check-out Date",
-    resGuestsLabel: "Guests Count",
-    resGuestsUnit: "Guest(s)",
+    resGuestsLabel: "Occupants Count",
+    resGuestsUnit: "Occupant(s)",
     resVehicleLabel: "Are you coming with your own vehicle?",
     resVehicleSub: "* Optional: If you don't know the car details now, you can leave it blank and submit normally.",
     resVehicleBrand: "Brand (Optional)",
     resVehicleModel: "Model (Optional)",
     resVehicleColor: "Color (Optional)",
     resVehiclePlate: "Plate (Optional)",
+    resObservationsLabel: "Observations (Optional)",
+    resObservationsPlaceholder: "Enter any observations about your stay here (e.g. estimated arrival time, crib request, etc.)",
 
     guestTitle: "2. Main Guest Identification",
     guestFullName: "FULL NAME",
@@ -363,7 +381,7 @@ export const TRANSLATIONS: Record<Language, TranslationDict> = {
     guestEmergencyFriend: "Friend",
     guestEmergencyOther: "Other",
     guestNextStepPet: "NEXT: PET",
-    guestNextStepCompanions: "NEXT: GUESTS",
+    guestNextStepCompanions: "NEXT: OCCUPANTS",
 
     petTitle: "WILL YOU BRING A PET?",
     petSub: "Mandatory information for the agreement",
@@ -379,10 +397,10 @@ export const TRANSLATIONS: Record<Language, TranslationDict> = {
     petBreedPlaceholder: "BREED",
     petVaccineLabel: "Pet Vaccination Card",
 
-    compTitle: "3. Companions / Guests",
+    compTitle: "3. Companions / Occupants",
     compPendente: "Pending",
-    compSub: "You reported {count} guests in total. Please identify each companion below:",
-    compGuestLabel: "Guest",
+    compSub: "You reported {count} occupants in total. Please identify each companion below:",
+    compGuestLabel: "Occupant",
     compIndividualTitle: "Individual Booking",
     compIndividualText: "Only the Main Guest",
     compFinishButton: "FINISH CHECK-IN",
@@ -399,7 +417,13 @@ export const TRANSLATIONS: Record<Language, TranslationDict> = {
     compSelfieLoading: "LOADING...",
     compSelfieOpen: "Open Camera",
     compSelfieRetake: "Retake",
-    compSelfieCameraPermission: "Please allow camera access."
+    compSelfieCameraPermission: "Please allow camera access.",
+    cameraNoCameraAlert: "We could not detect a camera on your device. Choose one of the options below to submit your selfie with document:",
+    cameraOptionA: "Option A: Continue on Mobile via QR Code",
+    cameraOptionADesc: "Point your phone's camera at the QR code below to open this step directly on your smartphone:",
+    cameraOptionB: "Option B: File Upload",
+    cameraOptionBDesc: "Upload a photo of your selfie with document already saved on your computer:",
+    cameraOptionBButton: "Select Selfie Image"
   },
   es: {
     wellintonName: "WELLINGTON RODOVALHO",
@@ -417,7 +441,7 @@ export const TRANSLATIONS: Record<Language, TranslationDict> = {
     stepReservation: "Reserva",
     stepMainGuest: "Titular",
     stepPet: "Mascota",
-    stepCompanions: "Huéspedes",
+    stepCompanions: "Ocupantes",
     stepFinish: "Fin",
 
     consentTitle: "Bienvenido al Check-in",
@@ -447,14 +471,16 @@ export const TRANSLATIONS: Record<Language, TranslationDict> = {
     resReasonOtherLabel: "Especifique el motivo",
     resCheckinLabel: "Fecha de Entrada (Check-in)",
     resCheckoutLabel: "Fecha de Salida (Check-out)",
-    resGuestsLabel: "Huéspedes",
-    resGuestsUnit: "Persona(s)",
+    resGuestsLabel: "Ocupantes",
+    resGuestsUnit: "Ocupante(s)",
     resVehicleLabel: "¿Vendrán en vehículo propio?",
     resVehicleSub: "* Opcional: Si no sabe los datos del coche ahora, puede dejarlo en blanco y enviar el formulario con normalidad.",
     resVehicleBrand: "Marca (Opcional)",
     resVehicleModel: "Modelo (Opcional)",
     resVehicleColor: "Color (Opcional)",
     resVehiclePlate: "Matrícula (Opcional)",
+    resObservationsLabel: "Observaciones (Opcional)",
+    resObservationsPlaceholder: "Escriba aquí alguna observación sobre su estadía (por ejemplo, hora prevista de llegada, solicitud de cuna, etc.)",
 
     guestTitle: "2. Identificación del Titular",
     guestFullName: "NOMBRE COMPLETO",
@@ -493,7 +519,7 @@ export const TRANSLATIONS: Record<Language, TranslationDict> = {
     guestEmergencyFriend: "Amigo(a)",
     guestEmergencyOther: "Otro",
     guestNextStepPet: "SIGUIENTE: MASCOTA",
-    guestNextStepCompanions: "SIGUIENTE: HUÉSPEDES",
+    guestNextStepCompanions: "SIGUIENTE: OCUPANTES",
 
     petTitle: "¿LLEVARÁ MASCOTA?",
     petSub: "Información obligatoria para el contrato",
@@ -511,8 +537,8 @@ export const TRANSLATIONS: Record<Language, TranslationDict> = {
 
     compTitle: "3. Acompañantes",
     compPendente: "Pendiente(s)",
-    compSub: "Informó {count} huéspedes en total. Identifique a los acompañantes a continuación:",
-    compGuestLabel: "Huésped",
+    compSub: "Informó {count} ocupantes en total. Identifique a los acompañantes a continuación:",
+    compGuestLabel: "Ocupante",
     compIndividualTitle: "Reserva Individual",
     compIndividualText: "Solo el Titular",
     compFinishButton: "FINALIZAR REGISTRO",
@@ -529,6 +555,12 @@ export const TRANSLATIONS: Record<Language, TranslationDict> = {
     compSelfieLoading: "CARGANDO...",
     compSelfieOpen: "Abrir Cámara",
     compSelfieRetake: "Rehacer",
-    compSelfieCameraPermission: "Por favor, permita el acceso a la cámara."
+    compSelfieCameraPermission: "Por favor, permita el acceso a la cámara.",
+    cameraNoCameraAlert: "No detectamos una cámara en su dispositivo. Elija una de las opciones a continuación para enviar su selfie con documento:",
+    cameraOptionA: "Opción A: Continuar en el Celular via Código QR",
+    cameraOptionADesc: "Apunte la cámara de su celular al código QR de abajo para abrir este paso directamente en su smartphone:",
+    cameraOptionB: "Opción B: Subir Archivo",
+    cameraOptionBDesc: "Suba una foto de su selfie con documento previamente guardada en la computadora:",
+    cameraOptionBButton: "Seleccionar Imagen de Selfie"
   }
 };

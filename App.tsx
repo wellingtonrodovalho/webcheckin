@@ -32,7 +32,8 @@ const App: React.FC = () => {
       totalValue: 0,
       securityDepositValue: 0,
       hasSecurityDeposit: false,
-      bookingSource: ''
+      bookingSource: '',
+      observations: ''
     },
     pet: {
       hasPet: false,
@@ -486,6 +487,17 @@ const App: React.FC = () => {
                     <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t.resCheckoutLabel}</label>
                     <input type="date" name="endDate" value={formData.reservation.endDate} onChange={handleReservationChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold outline-none" />
                   </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">{t.resObservationsLabel}</label>
+                  <textarea
+                    name="observations"
+                    placeholder={t.resObservationsPlaceholder}
+                    value={formData.reservation.observations}
+                    onChange={handleReservationChange}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold outline-none text-slate-700 placeholder-slate-400 focus:border-blue-500 focus:bg-white transition-all text-xs resize-none h-20"
+                  />
                 </div>
 
                 <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">

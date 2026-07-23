@@ -41,7 +41,7 @@ export const PROPERTIES: Property[] = [
     id: "8",
     name: "Crystal Place: Flat Moderno c/ Manobrista e Wi-Fi(1701)",
     address: "Avenida Edmundo P. de Abreu, 31, Apartamento 1701, Setor Pedro Ludovico, Goiânia-GO, 74823-030",
-    ownerName: "Wellington Rodovalho Fonseca",
+    ownerName: "Amanda Curado Peixoto",
     ownerCpf: "269.462.701-34",
     ownerStatus: "Casado",
     ownerProfession: "Corretor de Imóveis",
@@ -159,6 +159,7 @@ export interface ReservationData {
   securityDepositValue: number;
   hasSecurityDeposit: boolean;
   bookingSource: string;
+  observations?: string;
 }
 
 export interface MainGuest {

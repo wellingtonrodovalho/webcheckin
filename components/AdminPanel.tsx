@@ -34,6 +34,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, onResend }) => 
     }
   }, [isAuthenticated]);
 
+  // Estados para Recuperação de Senha (Esqueceu a Senha)
+  const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [recoveryStep, setRecoveryStep] = useState<'input_email' | 'options' | 'success'>('input_email');
+  const [recoveryError, setRecoveryError] = useState('');
+  const [recoverySuccessMsg, setRecoverySuccessMsg] = useState('');
+  const [recoveryNewPass, setRecoveryNewPass] = useState('');
+  const [recoveryConfirmPass, setRecoveryConfirmPass] = useState('');
+
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordChangeStatus, setPasswordChangeStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -137,6 +146,213 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, onResend }) => 
   };
 
   if (!isAuthenticated) {
+    if (isForgotPasswordMode) {
+      return (
+        <div className="max-w-md mx-auto my-4 bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden animate-in zoom-in-95">
+          <div className="p-6 bg-slate-900 text-white flex flex-col items-center text-center space-y-3">
+            <div className="w-14 h-14 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center border border-amber-500/30">
+              <i className="fas fa-key text-xl"></i>
+            </div>
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-widest text-slate-200">Recuperação de Senha</h2>
+              <p className="text-xs text-slate-400 mt-0.5">Painel do Administrador</p>
+            </div>
+          </div>
+
+          <div className="p-6 sm:p-8 space-y-5">
+            {recoveryError && (
+              <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-xs font-bold uppercase text-center flex items-center justify-center gap-2">
+                <i className="fas fa-exclamation-triangle"></i>
+                {recoveryError}
+              </div>
+            )}
+
+            {recoveryStep === 'input_email' && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const clean = recoveryEmail.trim().toLowerCase();
+                  if (clean === 'wellington.rodovalho@gmail.com' || clean === 'admin@alugagoias.com.br' || clean === 'admin') {
+                    setRecoveryError('');
+                    setRecoveryStep('options');
+                  } else {
+                    setRecoveryError('E-mail não reconhecido. Digite o e-mail do administrador.');
+                  }
+                }}
+                className="space-y-4"
+              >
+                <p className="text-xs font-medium text-slate-600 leading-relaxed">
+                  Informe o seu e-mail cadastrado como administrador para redefinir ou recuperar sua senha de acesso.
+                </p>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block ml-1">E-mail Cadastrado</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                      <i className="fas fa-envelope"></i>
+                    </div>
+                    <input
+                      type="text"
+                      value={recoveryEmail}
+                      onChange={(e) => setRecoveryEmail(e.target.value)}
+                      placeholder="wellington.rodovalho@gmail.com"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-slate-200 transition-all placeholder:text-slate-300"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 space-y-2.5">
+                  <button
+                    type="submit"
+                    className="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <i className="fas fa-arrow-right"></i>
+                    Verificar e Continuar
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsForgotPasswordMode(false);
+                      setRecoveryError('');
+                    }}
+                    className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                  >
+                    Voltar ao Login
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {recoveryStep === 'options' && (
+              <div className="space-y-5">
+                <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-xs font-bold text-emerald-800 flex items-center gap-2">
+                  <i className="fas fa-user-check text-emerald-600 text-sm"></i>
+                  E-mail validado: <span className="font-black">{recoveryEmail}</span>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-xs font-black text-slate-700 uppercase tracking-wide">Escolha uma opção:</p>
+
+                  {/* Opção 1: Restaurar Senha Mestra */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      localStorage.removeItem('admin_custom_password');
+                      setRecoverySuccessMsg('A senha personalizada foi removida e a Senha Mestra Padrão de Fábrica foi restaurada com sucesso!');
+                      setRecoveryStep('success');
+                    }}
+                    className="w-full p-4 bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 rounded-2xl text-left transition-all group cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-black text-xs text-slate-800 group-hover:text-amber-900 uppercase">1. Restaurar Senha Mestra Padrão</span>
+                      <i className="fas fa-undo text-amber-600"></i>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-1 font-medium">Restaura o acesso utilizando a senha padrão de fábrica: Wellington@AlugaGoias2026#</p>
+                  </button>
+
+                  {/* Opção 2: Definir nova senha */}
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      setRecoveryError('');
+                      const cleanNew = recoveryNewPass.trim();
+                      const cleanConfirm = recoveryConfirmPass.trim();
+
+                      if (cleanNew.length < 6) {
+                        setRecoveryError('A nova senha deve possuir no mínimo 6 caracteres.');
+                        return;
+                      }
+                      if (cleanNew !== cleanConfirm) {
+                        setRecoveryError('As duas senhas informadas não coincidem.');
+                        return;
+                      }
+
+                      localStorage.setItem('admin_custom_password', cleanNew);
+                      setRecoverySuccessMsg('Sua nova senha de acesso foi cadastrada e ativada com sucesso!');
+                      setRecoveryStep('success');
+                    }}
+                    className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-black text-xs text-slate-800 uppercase">2. Criar Nova Senha Personalizada</span>
+                      <i className="fas fa-lock text-slate-600"></i>
+                    </div>
+
+                    <div className="space-y-2">
+                      <input
+                        type="password"
+                        value={recoveryNewPass}
+                        onChange={(e) => setRecoveryNewPass(e.target.value)}
+                        placeholder="Nova Senha (mín. 6 dígitos)"
+                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-amber-500"
+                        required
+                      />
+                      <input
+                        type="password"
+                        value={recoveryConfirmPass}
+                        onChange={(e) => setRecoveryConfirmPass(e.target.value)}
+                        placeholder="Confirmar Nova Senha"
+                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-amber-500"
+                        required
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-[11px] uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <i className="fas fa-save text-amber-400"></i>
+                      Salvar e Ativar Nova Senha
+                    </button>
+                  </form>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsForgotPasswordMode(false);
+                    setRecoveryError('');
+                  }}
+                  className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                >
+                  Cancelar e Voltar ao Login
+                </button>
+              </div>
+            )}
+
+            {recoveryStep === 'success' && (
+              <div className="space-y-5 animate-in fade-in duration-300">
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0">
+                      <i className="fas fa-check text-sm"></i>
+                    </div>
+                    <p className="font-black text-xs uppercase tracking-wide">Recuperação Concluída!</p>
+                  </div>
+                  <p className="text-xs text-emerald-900 font-bold leading-relaxed">{recoverySuccessMsg}</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsForgotPasswordMode(false);
+                    setLoginError('');
+                    setPassword('');
+                  }}
+                  className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <i className="fas fa-sign-in-alt text-amber-400"></i>
+                  Ir para Tela de Login
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="max-w-md mx-auto my-4 bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden animate-in zoom-in-95">
         <div className="p-6 bg-slate-900 text-white flex flex-col items-center text-center space-y-3">
@@ -175,7 +391,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, onResend }) => 
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block ml-1">Senha</label>
+            <div className="flex justify-between items-center px-1">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Senha</label>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsForgotPasswordMode(true);
+                  setRecoveryEmail(email || 'wellington.rodovalho@gmail.com');
+                  setRecoveryStep('input_email');
+                  setRecoveryError('');
+                  setRecoverySuccessMsg('');
+                }}
+                className="text-[10px] font-black text-amber-600 hover:text-amber-700 hover:underline transition-all cursor-pointer"
+              >
+                Esqueceu a senha?
+              </button>
+            </div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                 <i className="fas fa-lock"></i>

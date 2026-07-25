@@ -28,7 +28,86 @@ const formatDateToDMY = (dateStr: string): string => {
 
 const isFemaleOwner = (name: string): boolean => {
   const upper = (name || "").toUpperCase();
-  return upper.includes("ROSIANI") || upper.includes("AMANDA") || upper.includes("CRISTIANE") || upper.includes("MARIA") || upper.includes("ANA");
+  return upper.includes("ROSIANI") || upper.includes("AMANDA") || upper.includes("CRISTIANE") || upper.includes("MARIA") || upper.includes("ANA") || upper.includes("DAISY");
+};
+
+const isFemaleGuest = (fullName: string): boolean => {
+  if (!fullName) return false;
+  const clean = fullName.trim();
+  const nameParts = clean.toLowerCase().split(/\s+/);
+  const firstName = nameParts[0] || "";
+
+  const femaleExceptions = new Set([
+    'daisy', 'kelly', 'sueli', 'suely', 'shirley', 'ivone', 'ivonete', 'simone',
+    'monique', 'michelle', 'carol', 'karen', 'ester', 'isabel', 'miriam', 'vivian',
+    'rachel', 'ruth', 'abigail', 'nicole', 'iris', 'inês', 'ines', 'beatriz',
+    'elis', 'marlis', 'rosani', 'rosiane', 'cleide', 'marileide', 'neide', 'salete',
+    'janete', 'odete', 'elieti', 'eliene', 'mirlene', 'marlene', 'solange',
+    'eliane', 'sirlene', 'arlete', 'gorete', 'marizete', 'dulce', 'jaqueline'
+  ]);
+
+  if (femaleExceptions.has(firstName)) return true;
+
+  const maleExceptionsEndingInA = new Set(['luca', 'lucca', 'jean', 'sasha', 'mustafa', 'george', 'pablo']);
+  if (firstName.endsWith('a') && !maleExceptionsEndingInA.has(firstName)) {
+    return true;
+  }
+
+  return false;
+};
+
+const formatGenderMaritalStatus = (status: string, isFemale: boolean): string => {
+  if (!status) return isFemale ? "solteira" : "solteiro";
+  const lower = status.toLowerCase().trim();
+  if (lower.includes("solteir")) return isFemale ? "solteira" : "solteiro";
+  if (lower.includes("casad")) return isFemale ? "casada" : "casado";
+  if (lower.includes("divorciad")) return isFemale ? "divorciada" : "divorciado";
+  if (lower.includes("viuv") || lower.includes("viúv")) return isFemale ? "viúva" : "viúvo";
+  if (lower.includes("união") || lower.includes("uniao")) return "em união estável";
+  return status;
+};
+
+const formatGenderNationality = (nat: string, isFemale: boolean): string => {
+  if (!nat) return isFemale ? "brasileira" : "brasileiro";
+  const lower = nat.toLowerCase().trim();
+  if (lower.includes("brasil") || lower.includes("brazil")) return isFemale ? "brasileira" : "brasileiro";
+  if (lower.includes("argentin")) return isFemale ? "argentina" : "argentino";
+  if (lower.includes("portugu")) return isFemale ? "portuguesa" : "português";
+  if (lower.includes("italian")) return isFemale ? "italiana" : "italiano";
+  if (lower.includes("espanh") || lower.includes("spanish")) return isFemale ? "espanhola" : "espanhol";
+  if (lower.endsWith("o") && isFemale) return lower.slice(0, -1) + "a";
+  return nat;
+};
+
+const formatGenderProfession = (prof: string, isFemale: boolean): string => {
+  if (!prof) return isFemale ? "Autônoma" : "Autônomo";
+  const clean = prof.trim();
+  const lower = clean.toLowerCase();
+  
+  if (isFemale) {
+    if (lower === "vendedor") return "vendedora";
+    if (lower === "empresario" || lower === "empresário") return "empresária";
+    if (lower === "advogado") return "advogada";
+    if (lower === "medico" || lower === "médico") return "médica";
+    if (lower === "engenheiro") return "engenheira";
+    if (lower === "professor") return "professora";
+    if (lower === "autonomo" || lower === "autônomo") return "autônoma";
+    if (lower === "aposentado") return "aposentada";
+    if (lower === "estudante") return "estudante";
+    if (lower.endsWith("or")) return lower + "a";
+    if (lower.endsWith("o")) return lower.slice(0, -1) + "a";
+    return lower;
+  } else {
+    if (lower === "vendedora") return "vendedor";
+    if (lower === "empresária") return "empresário";
+    if (lower === "advogada") return "advogado";
+    if (lower === "médica") return "médico";
+    if (lower === "engenheira") return "engenheiro";
+    if (lower === "professora") return "professor";
+    if (lower === "autônoma") return "autônomo";
+    if (lower === "aposentada") return "aposentado";
+    return lower;
+  }
 };
 
 export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> => {
@@ -409,6 +488,9 @@ ${data.companions.length > 0
 `.trim();
 
   // 4. Preparar Payload para Planilha e Email
+  const ownerIsFemale = isFemaleOwner(data.propertyDetails?.ownerName || '');
+  const guestIsFemale = isFemaleGuest(data.mainGuest.fullName || '');
+
   const payload = {
     "Data de Envio": new Date().toLocaleString('pt-BR'),
     "Destinatario_Email": "wellington.rodovalho@gmail.com",
@@ -418,13 +500,25 @@ ${data.companions.length > 0
     "Imóvel": data.propertyDetails?.name || 'N/A',
     "Endereço do Imóvel": data.propertyDetails?.address || 'N/A',
     "Capacidade Máxima": data.propertyDetails?.capacity ? `${data.propertyDetails.capacity}` : '4',
+
+    // Dados do Proprietário (Owner) com Concordância Gramatical
     "Proprietário": data.propertyDetails?.ownerName || 'N/A',
     "CPF do Proprietário": data.propertyDetails?.ownerCpf || 'N/A',
-    "Estado Civil Proprietário": data.propertyDetails?.ownerStatus || 'Casado(a)',
-    "Profissão Proprietário": data.propertyDetails?.ownerProfession || 'Proprietário(a)',
-    "Nacionalidade Proprietário": isFemaleOwner(data.propertyDetails?.ownerName || '') ? 'brasileira' : 'brasileiro',
+    "Estado Civil Proprietário": formatGenderMaritalStatus(data.propertyDetails?.ownerStatus || '', ownerIsFemale),
+    "Profissão Proprietário": formatGenderProfession(data.propertyDetails?.ownerProfession || '', ownerIsFemale),
+    "Nacionalidade Proprietário": ownerIsFemale ? 'brasileira' : 'brasileiro',
     "Endereço Proprietário": 'Goiânia-GO',
-    "Termo Proprietário": isFemaleOwner(data.propertyDetails?.ownerName || '') ? 'LOCADORA' : 'LOCADOR',
+    "Termo Proprietário": ownerIsFemale ? 'LOCADORA' : 'LOCADOR',
+    "Artigo Proprietário": ownerIsFemale ? 'A' : 'O',
+    "Artigo Proprietário Minusculo": ownerIsFemale ? 'a' : 'o',
+    "Título Proprietário": ownerIsFemale ? 'legítima proprietária' : 'legítimo proprietário',
+    "Denominação Proprietário": ownerIsFemale ? 'denominada simplesmente LOCADORA' : 'denominado simplesmente LOCADOR',
+    "Portador Proprietário": ownerIsFemale ? 'portadora' : 'portador',
+    "Residente Proprietário": ownerIsFemale ? 'residente e domiciliada' : 'residente e domiciliado',
+    "Ao Termo Proprietário": ownerIsFemale ? 'à LOCADORA' : 'ao LOCADOR',
+    "Do Termo Proprietário": ownerIsFemale ? 'da LOCADORA' : 'do LOCADOR',
+
+    // Reserva
     "Check-in": formatDateToDMY(data.reservation.startDate),
     "Check-out": formatDateToDMY(data.reservation.endDate),
     "Motivo da Viagem": data.reservation.reasonForVisit,
@@ -438,15 +532,26 @@ ${data.companions.length > 0
     "Placa Veículo": data.reservation.vehiclePlate || 'N/A',
     "Valor Total": formatCurrency(data.reservation.totalValue),
     "Caução": formatCurrency(data.reservation.securityDepositValue || 0),
+
+    // Dados do Titular (Hóspede/Inquilino) com Concordância Gramatical
     "Nome Titular": data.mainGuest.fullName,
     "CPF Titular": data.mainGuest.cpf,
     "RG Titular": data.mainGuest.rg,
-    "Nacionalidade Titular": data.mainGuest.nationality,
-    "Estado Civil Titular": data.mainGuest.maritalStatus,
-    "Profissão Titular": data.mainGuest.profession,
+    "Nacionalidade Titular": formatGenderNationality(data.mainGuest.nationality, guestIsFemale),
+    "Estado Civil Titular": formatGenderMaritalStatus(data.mainGuest.maritalStatus, guestIsFemale),
+    "Profissão Titular": formatGenderProfession(data.mainGuest.profession, guestIsFemale),
     "E-mail": data.mainGuest.email,
     "Telefone": data.mainGuest.phone,
     "Endereço": data.mainGuest.address,
+    "Termo Titular": guestIsFemale ? 'LOCATÁRIA' : 'LOCATÁRIO',
+    "Artigo Titular": guestIsFemale ? 'A' : 'O',
+    "Artigo Titular Minusculo": guestIsFemale ? 'a' : 'o',
+    "Título Titular": guestIsFemale ? 'LOCATÁRIA' : 'LOCATÁRIO',
+    "Denominação Titular": guestIsFemale ? 'denominada simplesmente LOCATÁRIA' : 'denominado simplesmente LOCATÁRIO',
+    "Portador Titular": guestIsFemale ? 'portadora' : 'portador',
+    "Residente Titular": guestIsFemale ? 'residente e domiciliada' : 'residente e domiciliado',
+    "Ao Termo Titular": guestIsFemale ? 'à LOCATÁRIA' : 'ao LOCATÁRIO',
+    "Do Termo Titular": guestIsFemale ? 'da LOCATÁRIA' : 'do LOCATÁRIO',
     "Logradouro e Número": data.mainGuest.addressStreet || '',
     "Complemento": data.mainGuest.addressComplement || '',
     "Bairro": data.mainGuest.addressDistrict || '',

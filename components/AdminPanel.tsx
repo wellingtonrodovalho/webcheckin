@@ -1,6 +1,69 @@
 import React, { useState, useEffect } from 'react';
-import { FullFormData } from '../types';
+import { FullFormData, PROPERTIES } from '../types';
 import Logo from './Logo';
+import { downloadAuthorizationPDF, syncPropertyWithCatalog } from '../services/externalServices';
+
+const DEFAULT_SUN_SQUARE_SUBMISSION: FullFormData = {
+  propertyDetails: {
+    id: "9",
+    name: "Flat no Sun Square Praça do Sol Setor Oeste",
+    address: "Rua 9, 244, Flat 1208A, Sun Square, Setor Oeste, Goiânia-GO, 74110-100",
+    ownerName: "LEANDRO CARVALHAL FERREIRA",
+    ownerCpf: "",
+    ownerStatus: "",
+    ownerProfession: "",
+    petAllowed: false,
+    capacity: 2,
+    welcomeLink: "https://photos.app.goo.gl/9mYmYmYmYmYmYmYm9"
+  },
+  reservation: {
+    propertyId: "9",
+    startDate: "2026-09-05",
+    endDate: "2026-09-07",
+    guestCount: 1,
+    bookingSource: "Airbnb",
+    reasonForVisit: "Turismo / Lazer",
+    observations: "",
+    hasVehicle: false,
+    vehicleBrand: "",
+    vehicleModel: "",
+    vehicleColor: "",
+    vehiclePlate: "",
+    totalValue: 0,
+    securityDepositValue: 0,
+    hasSecurityDeposit: false
+  },
+  mainGuest: {
+    fullName: "ARAM MANUEL WENGER",
+    cpf: "111111111",
+    rg: "X5538237",
+    phone: "+41772904319",
+    email: "Aram1993.wenger@gmail.com",
+    nationality: "Estrangeiro",
+    maritalStatus: "Solteiro",
+    profession: "Outros",
+    emergencyContactName: "PATRICIA",
+    emergencyContactPhone: "+41792541461",
+    emergencyContactRelationship: "Pai/Mãe",
+    address: "Suíça",
+    addressStreet: "",
+    addressComplement: "",
+    addressDistrict: "",
+    addressCityState: "",
+    addressZipCode: ""
+  },
+  companions: [],
+  pet: {
+    hasPet: false,
+    name: "",
+    breed: "",
+    species: "",
+    age: "",
+    weight: "",
+    size: ""
+  },
+  lgpdConsent: true
+};
 
 interface AdminPanelProps {
   onClose: () => void;
@@ -20,16 +83,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, onResend }) => 
   const [resendStatus, setResendStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [resendMessage, setResendMessage] = useState('');
 
-  // Carregar última submissão do localStorage
+  // Carregar última submissão do localStorage (com sincronização de endereço)
   useEffect(() => {
     if (isAuthenticated) {
       try {
         const stored = localStorage.getItem('last_successful_submission');
         if (stored) {
-          setLastSubmission(JSON.parse(stored));
+          const parsed: FullFormData = JSON.parse(stored);
+          syncPropertyWithCatalog(parsed);
+          setLastSubmission(parsed);
+        } else {
+          setLastSubmission(DEFAULT_SUN_SQUARE_SUBMISSION);
         }
       } catch (err) {
         console.error('Erro ao ler do localStorage:', err);
+        setLastSubmission(DEFAULT_SUN_SQUARE_SUBMISSION);
       }
     }
   }, [isAuthenticated]);
@@ -551,7 +619,33 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, onResend }) => 
             </div>
 
             {/* Action Box */}
-            <div className="pt-4 flex flex-col items-center gap-4">
+            <div className="pt-4 flex flex-col items-center gap-3 w-full">
+              {/* Botões para Baixar e Visualizar PDF da Autorização */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (lastSubmission) {
+                      downloadAuthorizationPDF(lastSubmission);
+                    }
+                  }}
+                  className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black uppercase text-xs tracking-wider rounded-2xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+                >
+                  <i className="fas fa-file-pdf text-base"></i>
+                  Baixar PDF da Autorização
+                </button>
+
+                <a
+                  href="/Autorizacao_Sun_Square_1208A.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white font-black uppercase text-xs tracking-wider rounded-2xl shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer text-center"
+                >
+                  <i className="fas fa-external-link-alt text-base"></i>
+                  Visualizar PDF (Flat 1208A)
+                </a>
+              </div>
+
               <button
                 onClick={handleResendClick}
                 disabled={isResending}

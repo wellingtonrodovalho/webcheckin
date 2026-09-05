@@ -1,9 +1,30 @@
 
-import { FullFormData } from "../types";
+import { FullFormData, PROPERTIES } from "../types";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
 const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxYh_OKaU0zVQU-vhInBJCTuXBJrjmLjzkmY4pfu7kQVqSrQyYEAwBNS2AwTz5vWspK/exec";
+
+export const syncPropertyWithCatalog = (data: FullFormData) => {
+  const targetId = data.propertyDetails?.id || data.reservation?.propertyId;
+  if (targetId) {
+    const currentProperty = PROPERTIES.find(p => p.id === targetId);
+    if (currentProperty) {
+      if (!data.propertyDetails) {
+        data.propertyDetails = { ...currentProperty };
+      } else {
+        data.propertyDetails.address = currentProperty.address;
+        data.propertyDetails.name = currentProperty.name;
+        data.propertyDetails.ownerName = currentProperty.ownerName;
+        data.propertyDetails.welcomeLink = currentProperty.welcomeLink;
+        data.propertyDetails.petAllowed = currentProperty.petAllowed;
+      }
+      if (data.reservation) {
+        data.reservation.propertyId = currentProperty.id;
+      }
+    }
+  }
+};
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { 
@@ -110,8 +131,8 @@ const formatGenderProfession = (prof: string, isFemale: boolean): string => {
   }
 };
 
-export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> => {
-  if (!GOOGLE_SHEETS_WEBAPP_URL) return false;
+export const buildAuthorizationPDFDoc = (data: FullFormData): jsPDF => {
+  syncPropertyWithCatalog(data);
 
   // 1. Preparar o PDF com o template solicitado
   const doc = new jsPDF();
@@ -431,6 +452,24 @@ export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> =
     doc.text("Nenhum veículo registrado para esta estadia.", 147, bottomY + 12, { maxWidth: 49 });
   }
 
+  return doc;
+};
+
+export const downloadAuthorizationPDF = (data: FullFormData, customFilename?: string) => {
+  const doc = buildAuthorizationPDFDoc(data);
+  const cleanName = (data.mainGuest.fullName || "Hospede").replace(/\s+/g, '_');
+  const filename = customFilename || `Autorizacao_${cleanName}_SunSquare_1208A.pdf`;
+  doc.save(filename);
+};
+
+export const saveToGoogleSheets = async (data: FullFormData): Promise<boolean> => {
+  if (!GOOGLE_SHEETS_WEBAPP_URL) return false;
+
+  // Garante que o endereço e dados do imóvel estejam atualizados
+  syncPropertyWithCatalog(data);
+
+  // 1. Preparar o PDF com o template solicitado
+  const doc = buildAuthorizationPDFDoc(data);
   const pdfOutput = doc.output('datauristring');
   const pdfBase64 = pdfOutput.split(',')[1]; // Strip data:application/pdf;base64,
 
